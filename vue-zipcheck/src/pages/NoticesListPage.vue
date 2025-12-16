@@ -29,18 +29,6 @@
           업데이트
         </button>
       </div>
-      <div class="relative w-full sm:w-64">
-        <input
-          class="w-full pl-10 pr-4 py-2 rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm transition-shadow"
-          placeholder="검색어를 입력하세요"
-          type="text"
-        />
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <span class="material-symbols-outlined text-text-muted-light dark:text-text-muted-dark text-lg"
-            >search</span
-          >
-        </div>
-      </div>
     </div>
     <div class="space-y-4">
       <div

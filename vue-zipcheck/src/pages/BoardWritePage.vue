@@ -51,52 +51,9 @@
 부적절한 홍보나 비방글은 삭제될 수 있습니다."
               rows="12"
             ></textarea>
-            <div class="absolute bottom-3 left-3 flex space-x-2 text-text-sub-light dark:text-zinc-500">
-              <button
-                class="p-1 hover:text-primary hover:bg-gray-200 dark:hover:bg-zinc-700 rounded transition-colors"
-                title="이미지 첨부"
-                type="button"
-              >
-                <span class="material-symbols-outlined text-xl">image</span>
-              </button>
-              <button
-                class="p-1 hover:text-primary hover:bg-gray-200 dark:hover:bg-zinc-700 rounded transition-colors"
-                title="텍스트 굵게"
-                type="button"
-              >
-                <span class="material-symbols-outlined text-xl">format_bold</span>
-              </button>
-              <button
-                class="p-1 hover:text-primary hover:bg-gray-200 dark:hover:bg-zinc-700 rounded transition-colors"
-                title="링크 추가"
-                type="button"
-              >
-                <span class="material-symbols-outlined text-xl">link</span>
-              </button>
-            </div>
             <div class="absolute bottom-4 right-4 text-xs text-text-sub-light dark:text-zinc-500">
               0 / 2000자
             </div>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-bold text-text-main-light dark:text-gray-200 mb-2"
-            >파일 첨부</label
-          >
-          <div
-            class="border-2 border-dashed border-border-light dark:border-border-dark rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary hover:bg-yellow-50 dark:hover:bg-zinc-800 transition-all group"
-          >
-            <span
-              class="material-symbols-outlined text-4xl text-gray-300 dark:text-zinc-600 group-hover:text-primary mb-2 transition-colors"
-              >cloud_upload</span
-            >
-            <p class="text-sm text-text-sub-light dark:text-gray-400">
-              클릭하여 파일을 업로드하거나, 드래그 앤 드롭 하세요.<br />
-              <span class="text-xs text-gray-400 dark:text-zinc-600"
-                >(JPG, PNG, GIF 최대 10MB)</span
-              >
-            </p>
-            <input class="hidden" type="file" />
           </div>
         </div>
         <div class="flex items-center justify-end space-x-4 pt-4 border-t border-border-light dark:border-border-dark">

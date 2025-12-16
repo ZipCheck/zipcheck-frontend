@@ -93,14 +93,6 @@
               부동산 앱으로 보고는 있지만 실제 거주하시는 분들의 생생한 후기나 조언을 듣고 싶어서
               글 남깁니다. 감사합니다!
             </p>
-            <div
-              class="my-6 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center h-64 border border-gray-200 dark:border-gray-700"
-            >
-              <span class="text-text-sub-light dark:text-text-sub-dark flex flex-col items-center gap-2">
-                <span class="material-symbols-outlined text-4xl">image</span>
-                <span class="text-sm">첨부된 이미지 (예시)</span>
-              </span>
-            </div>
           </div>
           <div
             class="flex items-center justify-center gap-4 pt-6 border-t border-gray-100 dark:border-gray-700"
@@ -167,37 +159,6 @@
                   후반이면 8~9억 선에서 가능하실 것 같아요. 학군도 좋고 생활 인프라도 잘 되어
                   있습니다.
                 </p>
-                <button
-                  class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium hover:text-text-main-light dark:hover:text-text-main-dark flex items-center gap-1"
-                >
-                  <span class="material-symbols-outlined text-sm">thumb_up_off_alt</span> 좋아요 3
-                </button>
-              </div>
-            </div>
-            <div class="w-full h-px bg-gray-100 dark:bg-gray-700"></div>
-            <div class="flex gap-4 pl-0 md:pl-14">
-              <div
-                class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex-shrink-0 flex items-center justify-center overflow-hidden"
-              >
-                <span class="material-symbols-outlined text-sm">face_3</span>
-              </div>
-              <div class="flex-grow">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-bold text-sm">집구하는중</span>
-                  <span class="text-xs text-text-sub-light dark:text-text-sub-dark"
-                    >30분 전</span
-                  >
-                </div>
-                <p
-                  class="text-sm text-text-main-light dark:text-text-main-dark leading-relaxed mb-2"
-                >
-                  저도 그쪽 보고 있는데 정보 감사합니다! 혹시 래미안 쪽은 어떤지 아시나요?
-                </p>
-                <button
-                  class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium hover:text-text-main-light dark:hover:text-text-main-dark flex items-center gap-1"
-                >
-                  <span class="material-symbols-outlined text-sm">thumb_up_off_alt</span> 좋아요
-                </button>
               </div>
             </div>
             <div class="w-full h-px bg-gray-100 dark:bg-gray-700"></div>
@@ -221,11 +182,6 @@
                   협의만 잘하시면 좋은 조건에 들어가실 수 있을 거에요. 발품 많이 파시는게
                   중요합니다.
                 </p>
-                <button
-                  class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium hover:text-text-main-light dark:hover:text-text-main-dark flex items-center gap-1"
-                >
-                  <span class="material-symbols-outlined text-sm">thumb_up_off_alt</span> 좋아요 1
-                </button>
               </div>
             </div>
           </div>

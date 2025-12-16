@@ -90,36 +90,7 @@
               </li>
             </ul>
           </div>
-          <div
-            class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700"
-          >
-            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-              <span class="material-symbols-outlined text-primary">tag</span>
-              인기 태그
-            </h3>
-            <div class="flex flex-wrap gap-2">
-              <a
-                class="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-xs text-text-sub-light dark:text-text-sub-dark transition-colors"
-                href="#"
-                >#전세사기예방</a
-              >
-              <a
-                class="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-xs text-text-sub-light dark:text-text-sub-dark transition-colors"
-                href="#"
-                >#강남아파트</a
-              >
-              <a
-                class="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-xs text-text-sub-light dark:text-text-sub-dark transition-colors"
-                href="#"
-                >#내집마련</a
-              >
-              <a
-                class="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-xs text-text-sub-light dark:text-text-sub-dark transition-colors"
-                href="#"
-                >#대출금리</a
-              >
-            </div>
-          </div>
+          
         </aside>
         <div class="flex-1">
           <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
@@ -133,8 +104,6 @@
               >
                 <option>최신순</option>
                 <option>인기순</option>
-                <option>조회순</option>
-                <option>댓글 많은순</option>
               </select>
             </div>
           </div>

@@ -12,16 +12,14 @@
         <!-- Navigation -->
         <nav class="hidden md:flex items-center gap-8">
           <router-link class="text-sm font-semibold text-text-main hover:text-primary-dark transition-colors" to="/">홈</router-link>
+          <router-link class="text-sm font-medium text-text-muted hover:text-text-main transition-colors" to="/map">지도</router-link>
           <router-link class="text-sm font-medium text-text-muted hover:text-text-main transition-colors" to="/boards">게시판</router-link>
           <router-link class="text-sm font-medium text-text-muted hover:text-text-main transition-colors" to="/notices">공지사항</router-link>
         </nav>
         <!-- Auth Buttons -->
         <div class="flex items-center gap-3">
-          <router-link to="/login" class="hidden sm:flex text-sm font-medium text-text-main hover:bg-background-alt px-4 py-2 rounded-full transition-colors">
-            로그인
-          </router-link>
-          <router-link to="/signup" class="flex items-center justify-center bg-primary hover:bg-primary-dark text-text-main text-sm font-bold px-5 py-2 rounded-full transition-colors shadow-sm">
-            회원가입
+          <router-link to="/mypage" class="flex items-center justify-center bg-primary hover:bg-primary-dark text-text-main text-sm font-bold px-5 py-2 rounded-full transition-colors shadow-sm">
+            마이페이지
           </router-link>
         </div>
       </div>
