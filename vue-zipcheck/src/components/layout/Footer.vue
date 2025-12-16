@@ -20,7 +20,7 @@
         </div>
       </div>
       <div class="mt-8 pt-8 border-t border-border-color text-xs text-text-muted text-center md:text-left">
-        © 2023 ZipCheck. All rights reserved.
+        © 2025 ZipCheck. All rights reserved.
       </div>
     </div>
   </footer>
