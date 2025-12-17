@@ -33,23 +33,30 @@ http.interceptors.response.use(
     return response.data; // Return only the data part of the response
   },
   (error) => {
+    // To re-enable network error popups, set VITE_DISABLE_NETWORK_ERROR_REDIRECT to 'false' or remove it from .env
+    const isNetworkErrorDisabled = import.meta.env.VITE_DISABLE_NETWORK_ERROR_REDIRECT === 'true';
+
     if (error.response) {
       // Handle HTTP error codes
       if (error.response.status === 401) {
-        // Unauthorized: remove token and redirect to login
+        // Unauthorized: always handle
         authStore.clearToken();
         alert('인증에 실패했습니다. 다시 로그인해주세요.');
         window.location.href = '/login';
       } else {
         // Handle other HTTP errors (404, 500, etc.)
-        const errorMessage = error.response.data?.message || '알 수 없는 서버 오류가 발생했습니다.';
-        alert(`${errorMessage} 홈페이지로 이동합니다.`);
-        window.location.href = '/';
+        if (!isNetworkErrorDisabled) {
+          const errorMessage = error.response.data?.message || '알 수 없는 서버 오류가 발생했습니다.';
+          alert(`${errorMessage} 홈페이지로 이동합니다.`);
+          window.location.href = '/';
+        }
       }
     } else {
       // Handle network errors (e.g., connection refused)
-      alert('네트워크 연결에 문제가 있습니다. 홈페이지로 이동합니다.');
-      window.location.href = '/';
+      if (!isNetworkErrorDisabled) {
+        alert('네트워크 연결에 문제가 있습니다. 홈페이지로 이동합니다.');
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }
