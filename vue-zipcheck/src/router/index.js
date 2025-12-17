@@ -1,4 +1,3 @@
-import RealEstateListingDetailPage from '@/pages/RealEstateListingDetailPage.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import HomePage from '@/pages/HomePage.vue';
 import BoardsListPage from '@/pages/BoardsListPage.vue';
@@ -13,7 +12,9 @@ import ProfileEdit from '@/components/mypage/ProfileEdit.vue';
 import MyReviews from '@/components/mypage/MyReviews.vue';
 import FavoriteProperties from '@/components/mypage/FavoriteProperties.vue';
 import MapEmoticonPage from '@/pages/MapEmoticonPage.vue';
+import RealEstateListingDetailPage from '@/pages/RealEstateListingDetailPage.vue';
 import NotificationSettings from '@/components/mypage/NotificationSettings.vue';
+import { authStore } from '@/stores/auth.store';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -29,6 +30,7 @@ const router = createRouter({
     {
       path: '/boards/write',
       component: BoardWritePage,
+      meta: { requiresAuth: true },
     },
     {
       path: '/login',
@@ -54,6 +56,7 @@ const router = createRouter({
       path: '/mypage',
       component: MyPage,
       redirect: '/mypage/profile',
+      meta: { requiresAuth: true },
       children: [
         {
           path: 'profile',
@@ -82,6 +85,18 @@ const router = createRouter({
       component: RealEstateListingDetailPage,
     },
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = authStore.isAuthenticated();
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+
+  if (requiresAuth && !isAuthenticated) {
+    alert('로그인이 필요합니다.');
+    next('/login');
+  } else {
+    next();
+  }
 });
 
 export default router;

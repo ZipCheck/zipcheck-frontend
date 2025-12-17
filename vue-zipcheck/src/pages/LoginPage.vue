@@ -11,7 +11,7 @@
           투명한 부동산 정보를 확인하려면 로그인하세요.
         </p>
       </div>
-      <form action="#" class="space-y-5" method="POST">
+      <form @submit.prevent="handleLogin" class="space-y-5" method="POST">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="email"
             >이메일 주소</label
@@ -21,6 +21,7 @@
               <span class="material-icons-outlined text-gray-400 text-xl"></span>
             </div>
             <input
+              v-model="email"
               class="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-shadow shadow-sm"
               id="email"
               name="email"
@@ -49,6 +50,7 @@
               <span class="material-icons-outlined text-gray-400 text-xl"></span>
             </div>
             <input
+              v-model="password"
               class="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition-shadow shadow-sm"
               id="password"
               name="password"
@@ -99,7 +101,28 @@
     </div>
   </div>
 </template>
-<script>
-export default {};
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { login } from '@/api/auth.api';
+import { authStore } from '@/stores/auth.store';
+
+const router = useRouter();
+const email = ref('');
+const password = ref('');
+
+const handleLogin = async () => {
+  try {
+    const data = await login({ email: email.value, password: password.value });
+    if (data.accessToken) {
+      authStore.setToken(data.accessToken);
+      router.push('/');
+    }
+  } catch (error) {
+    console.error('Login failed:', error);
+    // The interceptor will show a generic alert.
+    // Specific UI error handling can be added here if needed.
+  }
+};
 </script>
 <style scoped></style>

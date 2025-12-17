@@ -30,162 +30,31 @@
         </button>
       </div>
     </div>
-    <div class="space-y-4">
+    <div v-if="notices.length > 0" class="space-y-4">
       <div
+        v-for="notice in notices" :key="notice.id"
         class="group bg-surface-light dark:bg-surface-dark rounded-xl p-6 border border-border-light dark:border-border-dark hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer"
       >
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="flex-1">
             <div class="flex items-center gap-3 mb-2">
               <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+                :class="getCategoryClass(notice.category)"
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
               >
-                중요
+                {{ notice.category }}
               </span>
               <span class="text-xs text-text-muted-light dark:text-text-muted-dark"
-                >2023.10.24</span
+                >{{ new Date(notice.createdAt).toLocaleDateString() }}</span
               >
             </div>
             <h3
               class="text-lg font-bold text-text-light dark:text-text-dark group-hover:text-primary transition-colors"
             >
-              2023년 4분기 부동산 정책 변경 안내
+              {{ notice.title }}
             </h3>
             <p class="mt-1 text-sm text-text-muted-light dark:text-text-muted-dark line-clamp-1">
-              정부의 최신 부동산 정책 발표에 따른 ZipCheck 서비스 이용 가이드 변경사항을 안내해
-              드립니다. 주요 변경 사항은...
-            </p>
-          </div>
-          <div class="hidden sm:block">
-            <span
-              class="material-symbols-outlined text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors"
-              >chevron_right</span
-            >
-          </div>
-        </div>
-      </div>
-      <div
-        class="group bg-surface-light dark:bg-surface-dark rounded-xl p-6 border border-border-light dark:border-border-dark hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-      >
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
-              >
-                공지
-              </span>
-              <span class="text-xs text-text-muted-light dark:text-text-muted-dark"
-                >2023.10.23</span
-              >
-            </div>
-            <h3
-              class="text-lg font-bold text-text-light dark:text-text-dark group-hover:text-primary transition-colors"
-            >
-              서비스 점검 안내 (11월 1일 02:00 ~ 06:00)
-            </h3>
-            <p class="mt-1 text-sm text-text-muted-light dark:text-text-muted-dark line-clamp-1">
-              안정적인 서비스 제공을 위해 서버 점검이 예정되어 있습니다. 점검 시간 동안 서비스
-              이용이 일시 중단됩니다.
-            </p>
-          </div>
-          <div class="hidden sm:block">
-            <span
-              class="material-symbols-outlined text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors"
-              >chevron_right</span
-            >
-          </div>
-        </div>
-      </div>
-      <div
-        class="group bg-surface-light dark:bg-surface-dark rounded-xl p-6 border border-border-light dark:border-border-dark hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-      >
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
-              >
-                일반
-              </span>
-              <span class="text-xs text-text-muted-light dark:text-text-muted-dark"
-                >2023.10.20</span
-              >
-            </div>
-            <h3
-              class="text-lg font-bold text-text-light dark:text-text-dark group-hover:text-primary transition-colors"
-            >
-              커뮤니티 이용 가이드 업데이트
-            </h3>
-            <p class="mt-1 text-sm text-text-muted-light dark:text-text-muted-dark line-clamp-1">
-              건전한 커뮤니티 문화를 만들기 위해 이용 가이드가 일부 개정되었습니다. 주요 내용을
-              확인해 주세요.
-            </p>
-          </div>
-          <div class="hidden sm:block">
-            <span
-              class="material-symbols-outlined text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors"
-              >chevron_right</span
-            >
-          </div>
-        </div>
-      </div>
-      <div
-        class="group bg-surface-light dark:bg-surface-dark rounded-xl p-6 border border-border-light dark:border-border-dark hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-      >
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
-              >
-                업데이트
-              </span>
-              <span class="text-xs text-text-muted-light dark:text-text-muted-dark"
-                >2023.10.15</span
-              >
-            </div>
-            <h3
-              class="text-lg font-bold text-text-light dark:text-text-dark group-hover:text-primary transition-colors"
-            >
-              v2.1 앱 업데이트 안내 (지도 기능 개선)
-            </h3>
-            <p class="mt-1 text-sm text-text-muted-light dark:text-text-muted-dark line-clamp-1">
-              지도 검색 속도가 향상되었으며, 필터 기능이 더욱 세밀해졌습니다. 지금 바로 업데이트
-              하세요.
-            </p>
-          </div>
-          <div class="hidden sm:block">
-            <span
-              class="material-symbols-outlined text-text-muted-light dark:text-text-muted-dark group-hover:text-primary transition-colors"
-              >chevron_right</span
-            >
-          </div>
-        </div>
-      </div>
-      <div
-        class="group bg-surface-light dark:bg-surface-dark rounded-xl p-6 border border-border-light dark:border-border-dark hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer"
-      >
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
-              >
-                일반
-              </span>
-              <span class="text-xs text-text-muted-light dark:text-text-muted-dark"
-                >2023.10.10</span
-              >
-            </div>
-            <h3
-              class="text-lg font-bold text-text-light dark:text-text-dark group-hover:text-primary transition-colors"
-            >
-              개인정보 처리방침 변경 안내
-            </h3>
-            <p class="mt-1 text-sm text-text-muted-light dark:text-text-muted-dark line-clamp-1">
-              개인정보 보호법 개정에 따라 개인정보 처리방침이 일부 변경됩니다. 변경된 내용을
-              확인해 주시기 바랍니다.
+              {{ notice.summary }}
             </p>
           </div>
           <div class="hidden sm:block">
@@ -197,7 +66,11 @@
         </div>
       </div>
     </div>
+    <div v-else class="text-center py-10">
+      <p class="text-text-muted-light">등록된 공지사항이 없습니다.</p>
+    </div>
     <div class="mt-10 flex justify-center">
+      <!-- Static pagination for now -->
       <nav aria-label="Pagination" class="isolate inline-flex -space-x-px rounded-md shadow-sm">
         <a
           class="relative inline-flex items-center rounded-l-md px-2 py-2 text-text-muted-light dark:text-text-muted-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0"
@@ -218,20 +91,6 @@
           >2</a
         >
         <a
-          class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-text-light dark:text-text-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0"
-          href="#"
-          >3</a
-        >
-        <span
-          class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-text-muted-light dark:text-text-muted-dark ring-1 ring-inset ring-border-light dark:ring-border-dark focus:outline-offset-0"
-          >...</span
-        >
-        <a
-          class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-text-light dark:text-text-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0"
-          href="#"
-          >10</a
-        >
-        <a
           class="relative inline-flex items-center rounded-r-md px-2 py-2 text-text-muted-light dark:text-text-muted-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0"
           href="#"
         >
@@ -242,7 +101,36 @@
     </div>
   </div>
 </template>
-<script>
-export default {};
+<script setup>
+import { ref, onMounted } from 'vue';
+import { getNotices } from '@/api/notices.api.js';
+
+const notices = ref([]);
+
+const fetchNotices = async () => {
+  try {
+    const data = await getNotices();
+    // Assuming the API returns an array of notice objects
+    // and each object has at least: id, category, createdAt, title, summary
+    notices.value = data || [];
+  } catch (error) {
+    console.error('Failed to fetch notices:', error);
+  }
+};
+
+const getCategoryClass = (category) => {
+  const classes = {
+    '중요': 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+    '공지': 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+    '일반': 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+    '업데이트': 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+  };
+  return classes[category] || classes['일반'];
+};
+
+
+onMounted(() => {
+  fetchNotices();
+});
 </script>
 <style scoped></style>

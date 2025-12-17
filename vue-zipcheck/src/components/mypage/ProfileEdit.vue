@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="user"
     class="bg-surface-light dark:bg-surface-dark rounded-3xl shadow-soft border border-border-light dark:border-border-dark overflow-hidden"
   >
     <div class="p-8 pb-0">
@@ -13,7 +14,7 @@
             <img
               alt="Profile"
               class="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsq-yMNJpHpJieesLdHAW4vM9AmVsOnqATFFB5U3VJgbiOVvz9aWzGQDIjxspdiZih78DoR1Y7toxlaDc3ofFR_RQjM2TI7I_vT8fdpZFZP4Q7x1blrkMTIIlAFrxbowawfVMr6Gjaz1VFB0hzyIU-LnimEBK_0jKHwl5xsElOIKvBTS1IbvbiOzOhElXyii1CZOQIVjYm97O0Ct2kBRGys138unFcm0c--L02hIjpeaEt5mcKOKDZhIjwVLYTLeQ-AA4uD7UZN6M"
+              :src="user.profileImageUrl || 'https://lh3.googleusercontent.com/aida-public/AB6AXuAsq-yMNJpHpJieesLdHAW4vM9AmVsOnqATFFB5U3VJgbiOVvz9aWzGQDIjxspdiZih78DoR1Y7toxlaDc3ofFR_RQjM2TI7I_vT8fdpZFZP4Q7x1blrkMTIIlAFrxbowawfVMr6Gjaz1VFB0hzyIU-LnimEBK_0jKHwl5xsElOIKvBTS1IbvbiOzOhElXyii1CZOQIVjYm97O0Ct2kBRGys138unFcm0c--L02hIjpeaEt5mcKOKDZhIjwVLYTLeQ-AA4uD7UZN6M'"
             />
           </div>
           <button
@@ -32,7 +33,7 @@
           </button>
         </div>
       </div>
-      <form class="space-y-8">
+      <form class="space-y-8" @submit.prevent="handleProfileUpdate">
         <div class="space-y-2">
           <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">이메일 주소</label>
           <div class="relative">
@@ -41,9 +42,9 @@
             </div>
             <input
               class="block w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-gray-500 dark:text-gray-400 sm:text-sm cursor-not-allowed"
-              readonly=""
+              readonly
               type="email"
-              value="example@email.com"
+              :value="user.email"
             />
           </div>
           <p class="text-xs text-gray-400 mt-1 pl-1">이메일 주소는 변경할 수 없습니다.</p>
@@ -56,10 +57,10 @@
                 <span class="material-symbols-outlined text-gray-400">person</span>
               </div>
               <input
+                v-model="editableNickname"
                 class="block w-full pl-12 pr-4 py-3.5 bg-white dark:bg-input-bg-dark border border-gray-200 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
                 placeholder="닉네임을 입력해주세요"
                 type="text"
-                value="부동산고수"
               />
             </div>
             <button
@@ -137,4 +138,21 @@
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { inject, ref, watch } from 'vue';
+
+const user = inject('user');
+const editableNickname = ref('');
+
+watch(user, (newUser) => {
+  if (newUser) {
+    editableNickname.value = newUser.nickname;
+  }
+}, { immediate: true });
+
+const handleProfileUpdate = () => {
+    alert('프로필 업데이트 기능은 아직 구현되지 않았습니다.');
+    // Here you would call an API to update the profile, e.g.,
+    // updateUser({ nickname: editableNickname.value, ...other fields });
+}
+</script>

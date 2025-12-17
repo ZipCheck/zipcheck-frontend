@@ -39,8 +39,9 @@
         </router-link>
         <div class="border-t border-gray-100 dark:border-gray-700 my-2"></div>
         <a
+          @click.prevent="logout"
           href="#"
-          class="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+          class="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors cursor-pointer"
         >
           <span class="material-symbols-outlined text-xl">logout</span>
           로그아웃
@@ -50,4 +51,8 @@
   </aside>
 </template>
 
-<script setup></script>
+<script setup>
+import { inject } from 'vue';
+
+const logout = inject('logout');
+</script>
