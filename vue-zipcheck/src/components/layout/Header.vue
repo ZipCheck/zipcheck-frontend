@@ -26,9 +26,19 @@
         </nav>
         <!-- Auth Buttons -->
         <div class="flex items-center gap-3">
-          <router-link to="/mypage" class="flex items-center justify-center bg-primary hover:bg-primary-dark text-text-main text-sm font-bold px-5 py-2 rounded-full transition-colors shadow-sm">
-            마이페이지
-          </router-link>
+          <template v-if="isAuthenticated">
+            <router-link to="/mypage" class="flex items-center justify-center bg-primary hover:bg-primary-dark text-text-main text-sm font-bold px-5 py-2 rounded-full transition-colors shadow-sm">
+              마이페이지
+            </router-link>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-bold px-5 py-2 rounded-full transition-colors shadow-sm">
+              로그인
+            </router-link>
+            <router-link to="/signup" class="flex items-center justify-center bg-primary hover:bg-primary-dark text-text-main text-sm font-bold px-5 py-2 rounded-full transition-colors shadow-sm">
+              회원가입
+            </router-link>
+          </template>
         </div>
       </div>
     </div>
@@ -36,4 +46,8 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { authStore } from '@/stores/auth.store';
+
+const isAuthenticated = computed(() => authStore.isAuthenticated());
 </script>
