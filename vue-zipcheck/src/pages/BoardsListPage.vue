@@ -3,12 +3,14 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="flex flex-col lg:flex-row gap-8">
         <aside class="w-full lg:w-64 flex-shrink-0 space-y-8">
-          <button
-            class="w-full bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors"
-          >
-            <span class="material-symbols-outlined text-xl">edit</span>
-            글쓰기
-          </button>
+          <router-link to="/boards/write">
+            <button
+              class="w-full bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors"
+            >
+              <span class="material-symbols-outlined text-xl">edit</span>
+              글쓰기
+            </button>
+          </router-link>
           <div
             class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700"
           >

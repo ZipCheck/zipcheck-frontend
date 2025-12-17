@@ -11,10 +11,18 @@
         </router-link>
         <!-- Navigation -->
         <nav class="hidden md:flex items-center gap-8">
-          <router-link class="text-sm font-semibold text-text-main hover:text-primary-dark transition-colors" to="/">홈</router-link>
-          <router-link class="text-sm font-medium text-text-muted hover:text-text-main transition-colors" to="/map">지도</router-link>
-          <router-link class="text-sm font-medium text-text-muted hover:text-text-main transition-colors" to="/boards">게시판</router-link>
-          <router-link class="text-sm font-medium text-text-muted hover:text-text-main transition-colors" to="/notices">공지사항</router-link>
+          <router-link to="/" custom v-slot="{ href, navigate, isExactActive }">
+            <a :href="href" @click="navigate" class="text-sm transition-colors hover:text-text-main" :class="isExactActive ? 'font-semibold text-text-main' : 'font-medium text-text-muted'">홈</a>
+          </router-link>
+          <router-link to="/map" custom v-slot="{ href, navigate, isActive }">
+            <a :href="href" @click="navigate" class="text-sm transition-colors hover:text-text-main" :class="isActive ? 'font-semibold text-text-main' : 'font-medium text-text-muted'">지도</a>
+          </router-link>
+          <router-link to="/boards" custom v-slot="{ href, navigate, isActive }">
+            <a :href="href" @click="navigate" class="text-sm transition-colors hover:text-text-main" :class="isActive ? 'font-semibold text-text-main' : 'font-medium text-text-muted'">게시판</a>
+          </router-link>
+          <router-link to="/notices" custom v-slot="{ href, navigate, isActive }">
+            <a :href="href" @click="navigate" class="text-sm transition-colors hover:text-text-main" :class="isActive ? 'font-semibold text-text-main' : 'font-medium text-text-muted'">공지사항</a>
+          </router-link>
         </nav>
         <!-- Auth Buttons -->
         <div class="flex items-center gap-3">
