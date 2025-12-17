@@ -1,12 +1,12 @@
 <template>
-  <main class="flex-grow py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
-      <MyPageSidebar />
-      <div class="lg:col-span-3">
-        <router-view />
-      </div>
-    </div>
-  </main>
+	<main class="flex-grow py-10 px-4 sm:px-6 lg:px-8">
+		<div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+			<MyPageSidebar />
+			<div class="lg:col-span-3">
+				<router-view />
+			</div>
+		</div>
+	</main>
 </template>
 
 <script setup>
@@ -21,28 +21,39 @@ const router = useRouter();
 const user = ref(null);
 
 const fetchUserInfo = async () => {
-  try {
-    const data = await getMyInfo();
-    user.value = data;
-  } catch (error) {
-    console.error('Failed to fetch user info:', error);
-  }
+	try {
+		const data = await getMyInfo();
+		user.value = data;
+	} catch (error) {
+		console.error('Failed to fetch user info, using mock data:', error);
+		// Mock data for development when the backend is not available
+		user.value = {
+			email: 'user@example.com',
+			nickname: '임시사용자',
+			profileImageUrl: null,
+			commentNotifications: true,
+			priceChangeNotifications: true,
+		};
+	}
 };
 
 const logout = async () => {
-  try {
-    await apiLogout();
-  } catch (error) {
-    // Even if logout API fails, clear local token and redirect
-    console.error('Logout API call failed, proceeding with local logout:', error);
-  } finally {
-    authStore.clearToken();
-    router.push('/login');
-  }
+	try {
+		await apiLogout();
+	} catch (error) {
+		// Even if logout API fails, clear local token and redirect
+		console.error(
+			'Logout API call failed, proceeding with local logout:',
+			error,
+		);
+	} finally {
+		authStore.clearToken();
+		router.push('/login');
+	}
 };
 
 onMounted(() => {
-  fetchUserInfo();
+	fetchUserInfo();
 });
 
 provide('user', user);

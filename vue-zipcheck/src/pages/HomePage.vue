@@ -1,20 +1,22 @@
 <template>
-  <main class="flex flex-col min-h-screen">
-    <HeroSection />
+	<main class="flex flex-col min-h-screen">
+		<HeroSection />
 
-    <!-- Main Content Container -->
-    <div class="max-w-[1200px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
-      <FeatureSection />
+		<!-- Main Content Container -->
+		<div
+			class="max-w-[1200px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20"
+		>
+			<FeatureSection />
 
-      <!-- Content Preview Grid -->
-      <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <NoticePreview />
-        <BoardPreview />
-      </section>
+			<!-- Content Preview Grid -->
+			<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+				<NoticePreview />
+				<BoardPreview />
+			</section>
 
-      <WhyZipCheck />
-    </div>
-  </main>
+			<WhyZipCheck />
+		</div>
+	</main>
 </template>
 
 <script setup>

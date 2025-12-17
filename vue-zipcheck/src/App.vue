@@ -1,9 +1,9 @@
 <template>
-  <div class="bg-background-light text-text-main">
-    <Header />
-    <RouterView />
-    <Footer />
-  </div>
+	<div class="bg-background-light text-text-main">
+		<Header />
+		<RouterView />
+		<Footer />
+	</div>
 </template>
 
 <script setup>

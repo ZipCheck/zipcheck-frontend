@@ -5,12 +5,12 @@ import http from './http';
  * @param {{ content: string }} commentData
  */
 export const createComment = (boardId, commentData) => {
-  return http.post(`/boards/${boardId}/comments`, commentData);
+	return http.post(`/boards/${boardId}/comments`, commentData);
 };
 
 /**
  * @param {number | string} commentId
  */
-export const deleteComment = (commentId) => {
-  return http.delete(`/comments/${commentId}`);
+export const deleteComment = commentId => {
+	return http.delete(`/comments/${commentId}`);
 };

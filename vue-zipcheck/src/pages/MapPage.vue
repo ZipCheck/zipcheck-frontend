@@ -1,8 +1,8 @@
 <template>
-  <main class="flex-grow flex relative h-[calc(100vh-64px)] overflow-hidden">
-    <MapSidebar />
-    <KakaoMap />
-  </main>
+	<main class="flex-grow flex relative h-[calc(100vh-64px)] overflow-hidden">
+		<MapSidebar />
+		<KakaoMap />
+	</main>
 </template>
 
 <script setup>

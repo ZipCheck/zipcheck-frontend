@@ -1,8 +1,8 @@
 <template>
-  <main class="flex-1 relative flex">
-    <EmoticonSidebar />
-    <KakaoMap />
-  </main>
+	<main class="flex-1 relative flex">
+		<EmoticonSidebar />
+		<KakaoMap />
+	</main>
 </template>
 
 <script setup>
