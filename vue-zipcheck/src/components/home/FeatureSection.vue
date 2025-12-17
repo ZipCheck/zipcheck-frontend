@@ -30,27 +30,28 @@
 				</div>
 			</div>
 			<!-- Card 2 -->
-			<div
+			<router-link
+				to="/map-emoticon"
 				class="group bg-white p-8 rounded-2xl border border-border-color hover:border-primary hover:shadow-soft-hover transition-all duration-300 cursor-pointer flex flex-col items-start gap-4 h-full"
 			>
 				<div
 					class="size-14 rounded-2xl bg-primary/20 flex items-center justify-center group-hover:bg-primary transition-colors"
 				>
 					<span class="material-symbols-outlined text-3xl text-text-main"
-						>thumb_up</span
+						>emoji_emotions</span
 					>
 				</div>
 				<div>
 					<h3
 						class="text-lg font-bold mb-2 group-hover:text-primary-dark transition-colors"
 					>
-						실제 사용자 후기
+						지도 감정 표현
 					</h3>
 					<p class="text-sm text-text-muted leading-relaxed">
-						거주민 인증을 거친 생생한 실제 후기를 확인하세요.
+						지도를 탐색하며 다양한 감정을 표현하고 공유해보세요.
 					</p>
 				</div>
-			</div>
+			</router-link>
 			<!-- Card 3 -->
 			<div
 				class="group bg-white p-8 rounded-2xl border border-border-color hover:border-primary hover:shadow-soft-hover transition-all duration-300 cursor-pointer flex flex-col items-start gap-4 h-full"

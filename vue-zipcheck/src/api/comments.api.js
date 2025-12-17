@@ -5,7 +5,9 @@ import http from './http';
  * @param {{ content: string }} commentData
  */
 export const createComment = (boardId, commentData) => {
-	return http.post(`/boards/${boardId}/comments`, commentData);
+	return http
+		.post(`/boards/${boardId}/comments`, commentData)
+		.then(response => response.data);
 };
 
 /**

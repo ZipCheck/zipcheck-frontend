@@ -47,26 +47,16 @@
 			</div>
 			<!-- Auxiliary CTAs -->
 			<div class="flex flex-wrap items-center justify-center gap-4 pt-2">
-				<a
+				<router-link
 					class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-border-color rounded-full hover:border-primary hover:text-primary-dark transition-all shadow-sm group"
-					href="#"
-				>
-					<span class="text-sm font-semibold">실제 사용자 후기 보러가기</span>
-					<span
-						class="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform"
-						>arrow_forward</span
-					>
-				</a>
-				<a
-					class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-border-color rounded-full hover:border-primary hover:text-primary-dark transition-all shadow-sm group"
-					href="#"
+					to="/boards"
 				>
 					<span class="text-sm font-semibold">최근 커뮤니티 글 보기</span>
 					<span
 						class="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform"
 						>arrow_forward</span
 					>
-				</a>
+				</router-link>
 			</div>
 		</div>
 	</section>

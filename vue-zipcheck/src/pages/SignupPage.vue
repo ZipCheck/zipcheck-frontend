@@ -19,7 +19,35 @@
 					투명한 부동산 정보 커뮤니티 ZipCheck와 함께하세요.
 				</p>
 			</div>
-			<form action="#" class="space-y-5" method="POST">
+			<form @submit.prevent="handleSignup" class="space-y-5" method="POST">
+				<!-- Profile Image Upload -->
+				<div class="flex flex-col items-center space-y-4">
+					<label
+						for="profile-image-input"
+						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+						>프로필 이미지 (선택 사항)</label
+					>
+					<div class="relative cursor-pointer" @click="triggerFileInput">
+						<img
+							:src="imagePreview"
+							alt="Profile"
+							class="w-24 h-24 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600"
+						/>
+						<div
+							class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center rounded-full opacity-0 hover:opacity-100 transition-opacity"
+						>
+							<span class="material-icons-round text-white">photo_camera</span>
+						</div>
+					</div>
+					<input
+						ref="fileInput"
+						type="file"
+						@change="handleFileChange"
+						class="hidden"
+						id="profile-image-input"
+						accept="image/*"
+					/>
+				</div>
 				<div>
 					<label
 						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
@@ -33,11 +61,12 @@
 							<span class="material-icons-round text-gray-400 text-xl"></span>
 						</div>
 						<input
+							v-model="email"
 							class="block w-full pl-10 pr-3 py-3 border border-input-border-light dark:border-input-border-dark rounded-xl leading-5 bg-white dark:bg-zinc-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all sm:text-sm dark:text-white"
 							id="email"
 							name="email"
 							placeholder="example@email.com"
-							required=""
+							required
 							type="email"
 						/>
 					</div>
@@ -55,11 +84,12 @@
 							<span class="material-icons-round text-gray-400 text-xl"></span>
 						</div>
 						<input
+							v-model="nickname"
 							class="block w-full pl-10 pr-3 py-3 border border-input-border-light dark:border-input-border-dark rounded-xl leading-5 bg-white dark:bg-zinc-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all sm:text-sm dark:text-white"
 							id="nickname"
 							name="nickname"
 							placeholder="커뮤니티에서 사용할 이름"
-							required=""
+							required
 							type="text"
 						/>
 					</div>
@@ -77,11 +107,12 @@
 							<span class="material-icons-round text-gray-400 text-xl"></span>
 						</div>
 						<input
+							v-model="password"
 							class="block w-full pl-10 pr-3 py-3 border border-input-border-light dark:border-input-border-dark rounded-xl leading-5 bg-white dark:bg-zinc-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all sm:text-sm dark:text-white"
 							id="password"
 							name="password"
 							placeholder="8자 이상 입력해주세요"
-							required=""
+							required
 							type="password"
 						/>
 					</div>
@@ -99,41 +130,14 @@
 							<span class="material-icons-round text-gray-400 text-xl"></span>
 						</div>
 						<input
+							v-model="passwordConfirm"
 							class="block w-full pl-10 pr-3 py-3 border border-input-border-light dark:border-input-border-dark rounded-xl leading-5 bg-white dark:bg-zinc-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all sm:text-sm dark:text-white"
 							id="password_confirm"
 							name="password_confirm"
 							placeholder="비밀번호를 한번 더 입력해주세요"
-							required=""
+							required
 							type="password"
 						/>
-					</div>
-				</div>
-				<div class="flex items-start mt-4">
-					<div class="flex items-center h-5">
-						<input
-							class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded dark:bg-zinc-800 dark:border-gray-600"
-							id="terms"
-							name="terms"
-							type="checkbox"
-						/>
-					</div>
-					<div class="ml-3 text-sm">
-						<label
-							class="font-medium text-gray-700 dark:text-gray-300"
-							for="terms"
-						>
-							<a
-								class="text-gray-900 dark:text-white underline hover:text-primary transition-colors"
-								href="#"
-								>이용약관</a
-							>
-							및
-							<a
-								class="text-gray-900 dark:text-white underline hover:text-primary transition-colors"
-								href="#"
-								>개인정보 처리방침</a
-							>에 동의합니다.
-						</label>
 					</div>
 				</div>
 				<div class="pt-2">
@@ -166,7 +170,62 @@
 		</div>
 	</div>
 </template>
-<script>
-export default {};
+
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { signup } from '@/api/auth.api';
+import defaultAvatar from '@/assets/images/default-avatar.svg';
+
+const router = useRouter();
+
+const email = ref('');
+const nickname = ref('');
+const password = ref('');
+const passwordConfirm = ref('');
+const profileImage = ref(null);
+const imagePreview = ref(defaultAvatar);
+const fileInput = ref(null);
+
+const triggerFileInput = () => {
+	fileInput.value.click();
+};
+
+const handleFileChange = event => {
+	const file = event.target.files[0];
+	if (file) {
+		profileImage.value = file;
+		const reader = new FileReader();
+		reader.onload = e => {
+			imagePreview.value = e.target.result;
+		};
+		reader.readAsDataURL(file);
+	}
+};
+
+const handleSignup = async () => {
+	if (password.value !== passwordConfirm.value) {
+		alert('비밀번호가 일치하지 않습니다.');
+		return;
+	}
+
+	const formData = new FormData();
+	formData.append('email', email.value);
+	formData.append('nickname', nickname.value);
+	formData.append('password', password.value);
+	if (profileImage.value) {
+		formData.append('profileImage', profileImage.value);
+	}
+
+	try {
+		await signup(formData);
+		alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+		router.push('/login');
+	} catch (error) {
+		console.error('Signup failed:', error);
+		alert('회원가입에 실패했습니다. 입력 정보를 확인해주세요.');
+	}
+};
 </script>
+
 <style scoped></style>

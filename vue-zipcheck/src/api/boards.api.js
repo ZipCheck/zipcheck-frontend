@@ -26,7 +26,7 @@ export const createBoard = boardData => {
  * @param {number | string} id
  */
 export const likeBoard = id => {
-	return http.post(`/boards/${id}/like`);
+	return http.post(`/boards/${id}/like`).then(response => response.data);
 };
 
 /**

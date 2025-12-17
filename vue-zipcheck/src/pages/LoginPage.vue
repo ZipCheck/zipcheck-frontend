@@ -72,6 +72,7 @@
 				</div>
 				<div class="flex items-center">
 					<input
+						v-model="rememberMe"
 						class="h-4 w-4 text-primary focus:ring-primary border-gray-300 dark:border-gray-600 rounded dark:bg-gray-800 cursor-pointer"
 						id="remember-me"
 						name="remember-me"
@@ -115,7 +116,7 @@
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { login } from '@/api/auth.api';
 import { authStore } from '@/stores/auth.store';
@@ -123,9 +124,24 @@ import { authStore } from '@/stores/auth.store';
 const router = useRouter();
 const email = ref('');
 const password = ref('');
+const rememberMe = ref(false);
+
+onMounted(() => {
+	const savedEmail = localStorage.getItem('rememberedEmail');
+	if (savedEmail) {
+		email.value = savedEmail;
+		rememberMe.value = true;
+	}
+});
 
 const handleLogin = async () => {
 	try {
+		if (rememberMe.value) {
+			localStorage.setItem('rememberedEmail', email.value);
+		} else {
+			localStorage.removeItem('rememberedEmail');
+		}
+
 		const data = await login({ email: email.value, password: password.value });
 		if (data.accessToken) {
 			authStore.setToken(data.accessToken);
