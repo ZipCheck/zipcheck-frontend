@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { authStore } from '@/stores/auth.store';
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -10,7 +11,7 @@ const http = axios.create({
 // Request interceptor to add the token to headers
 http.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = authStore.getToken();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -24,11 +25,10 @@ http.interceptors.request.use(
 // Response interceptor to handle API responses
 http.interceptors.response.use(
   (response) => {
-    // Assuming backend sends { success: boolean, message: string, data: T }
+    // Backend can indicate success:false for business logic errors
     if (response.data && response.data.success === false) {
-      // You can handle the error globally here, e.g., show a toast notification
-      alert(response.data.message || 'An error occurred');
-      return Promise.reject(new Error(response.data.message || 'Error'));
+      alert(response.data.message || '오류가 발생했습니다.');
+      return Promise.reject(new Error(response.data.message || 'Backend Error'));
     }
     return response.data; // Return only the data part of the response
   },
@@ -37,18 +37,19 @@ http.interceptors.response.use(
       // Handle HTTP error codes
       if (error.response.status === 401) {
         // Unauthorized: remove token and redirect to login
-        localStorage.removeItem('accessToken');
-        alert('Authentication failed. Please log in again.');
-        // Using window.location to redirect, as router might not be available here
+        authStore.clearToken();
+        alert('인증에 실패했습니다. 다시 로그인해주세요.');
         window.location.href = '/login';
       } else {
-        // Handle other HTTP errors
-        const errorMessage = error.response.data?.message || 'An unexpected error occurred.';
-        alert(errorMessage);
+        // Handle other HTTP errors (404, 500, etc.)
+        const errorMessage = error.response.data?.message || '알 수 없는 서버 오류가 발생했습니다.';
+        alert(`${errorMessage} 홈페이지로 이동합니다.`);
+        window.location.href = '/';
       }
     } else {
-      // Handle network errors
-      alert('Network error. Please check your connection.');
+      // Handle network errors (e.g., connection refused)
+      alert('네트워크 연결에 문제가 있습니다. 홈페이지로 이동합니다.');
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }
