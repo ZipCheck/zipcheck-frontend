@@ -1,205 +1,288 @@
-# 비밀번호 찾기 / 재설정 기능 프론트엔드 생성 요청 스크립트
+#  ZipCheck 공지사항 API 명세서
 
-본 문서는 **ZipCheck Backend의 auth 모듈**에 이미 구현되어 있는
+본 문서는 **ZipCheck 백엔드(dev)** 기준의 **공지사항(Notice) API 명세**이다.
 
-> ✔ 이메일 인증코드 발급
-> ✔ 인증코드 검증
-> ✔ 임시 비밀번호 이메일 전송
-
-기능을 **프론트엔드(Vue)** 에서 사용할 수 있도록
-AI에게 페이지 및 API 연동 로직을 생성하도록 지시하기 위한 문서이다.
-
-> ⚠️ 백엔드 로직은 이미 존재하며,
-> 프론트엔드는 해당 API를 **그대로 호출하는 역할만 수행**한다.
+이 문서는 **AI에게 프론트엔드를 생성하도록 요청할 때 그대로 전달**하는 것을 목적으로 하며,
+이미 존재하는 페이지 디자인을 유지한 채 **API 요청/응답 로직만 구현**하도록 한다.
 
 ---
 
-## 🎯 목표
+## 1. 공통 규칙
 
-* 로그인 페이지에서 진입 가능한 **비밀번호 찾기(Forgot Password)** 기능 구현
-* 이메일 기반 인증 흐름 제공
-* 디자인은 기존 ZipCheck 스타일을 유지
-* 백엔드 Auth API와 1:1 연동
+### Base URL
 
----
-
-## 📌 절대 규칙
-
-1. 기존 UI 스타일 및 컴포넌트 구조 유지
-2. API 스펙 임의 변경 금지
-3. 더미 데이터 사용 금지
-4. 실제 이메일 인증 흐름 그대로 구현
-
----
-
-## 🧩 대상 기술 스택
-
-* Vue 3 (Composition API)
-* Axios (기존 http 인스턴스 사용)
-* Vue Router
-
----
-
-## 📍 페이지 구성
-
-### 1. 비밀번호 찾기 페이지
-
-**라우트**
-
-```
-/forgot-password
+```text
+http://localhost:8080
 ```
 
-**기능**
-
-* 사용자 이메일 입력
-* 인증코드 발송 버튼
-* 인증코드 입력 폼 표시
-
----
-
-### 2. 인증코드 확인 단계
-
-**기능**
-
-* 이메일로 받은 인증코드 입력
-* 인증코드 검증 요청
-* 성공 시 임시 비밀번호 발급 요청
-
----
-
-## 🔐 백엔드 API 연동 스펙
-
-> 아래 API는 `zipcheck-backend`의 `auth` 패키지 구현을 기준으로 한다.
-
----
-
-### 1. 인증코드 발급
-
-**URL**
-
-```
-POST /auth/password/code
-```
-
-**Request JSON**
-
-```json
-{
-  "email": "user@email.com"
-}
-```
-
-**Response JSON**
+### 공통 Response 형식 (ApiResponse)
 
 ```json
 {
   "success": true,
-  "message": "인증코드가 이메일로 전송되었습니다"
+  "message": "OK",
+  "data": {}
 }
 ```
 
-**프론트 구현 요구사항**
+### 인증 방식
 
-* 이메일 유효성 검사
-* 성공 시 인증코드 입력 영역 활성화
+* JWT Access Token 사용
+* 인증이 필요한 API는 반드시 아래 헤더 포함
+
+```http
+Authorization: Bearer {ACCESS_TOKEN}
+Content-Type: application/json
+```
 
 ---
 
-### 2. 인증코드 검증 및 임시 비밀번호 발급
+## 2. 공지사항 카테고리 규칙
 
-**URL**
+공지사항은 아래 카테고리 중 하나를 가진다.
 
+| 코드값       | 의미   |
+| --------- | ---- |
+| IMPORTANT | 중요   |
+| NORMAL    | 일반   |
+| UPDATE    | 업데이트 |
+
+> 프론트에서는 코드값을 그대로 사용하고,
+> 화면에 표시할 라벨(한글)은 프론트에서 매핑한다.
+
+---
+
+## 3. 공지사항 목록 조회 (전체 / 카테고리별)
+
+### URL
+
+```http
+GET /notices
 ```
-POST /auth/password/reset
+
+### Query Parameter (선택)
+
+| 이름       | 설명        | 예시                          |
+| -------- | --------- | --------------------------- |
+| category | 공지사항 카테고리 | IMPORTANT / NORMAL / UPDATE |
+
+### 요청 예시
+
+```http
+GET /notices
+GET /notices?category=IMPORTANT
 ```
 
-**Request JSON**
+> 로그인하지 않아도 조회 가능
 
-```json
-{
-  "email": "user@email.com",
-  "authCode": "123456"
-}
-```
-
-**Response JSON**
+### Response (200)
 
 ```json
 {
   "success": true,
-  "message": "임시 비밀번호가 이메일로 발송되었습니다"
+  "data": [
+    {
+      "noticeId": 1,
+      "title": "서비스 점검 안내",
+      "category": "IMPORTANT",
+      "nickname": "관리자",
+      "hit": 42,
+      "createdAt": "2025-01-18T10:00:00"
+    }
+  ]
 }
 ```
 
-**프론트 구현 요구사항**
-
-* 인증코드 검증 성공 시 안내 메시지 출력
-* 로그인 페이지로 이동 유도
-
 ---
 
-## 🧠 UX 흐름 (필수)
+## 4. 공지사항 상세 조회
 
-1. 로그인 페이지에서 "비밀번호를 잊으셨나요?" 클릭
-2. 이메일 입력 → 인증코드 발급 요청
-3. 인증코드 입력 → 검증 요청
-4. 이메일로 임시 비밀번호 수신
-5. 로그인 페이지 이동 후 로그인
+### URL
 
----
-
-## ⚠️ 에러 처리 규칙
-
-* 이메일 미존재 시 오류 메시지 표시
-* 인증코드 불일치 시 오류 표시
-* 재요청 가능하도록 버튼 활성화
-
----
-
-## 📁 권장 파일 위치
-
-```
-src/
- ┣ pages/
- ┃ ┗ ForgotPasswordPage.vue
- ┣ api/
- ┃ ┗ auth.api.js (기존 파일에 함수 추가)
+```http
+GET /notices/{noticeId}
 ```
 
+### 요청 예시
+
+```http
+GET /notices/1
+```
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "data": {
+    "noticeId": 1,
+    "title": "서비스 점검 안내",
+    "category": "IMPORTANT",
+    "content": "1월 20일 02:00 ~ 04:00 서버 점검이 진행됩니다.",
+    "nickname": "관리자",
+    "hit": 43,
+    "createdAt": "2025-01-18T10:00:00"
+  }
+}
+```
+
+> 상세 조회 시 조회수(hit)가 자동 증가한다.
+
 ---
 
-## ✍️ AI에게 전달할 최종 요청 문장
+## 5. 공지사항 등록 (관리자)
 
+### URL
+
+```http
+POST /notices
 ```
-너는 ZipCheck 프론트엔드 개발자다.
 
-이미 구현된 백엔드 Auth API를 사용하여
-비밀번호 찾기(이메일 인증 + 임시 비밀번호 발급) 기능을 구현하라.
+### Header
+
+```http
+Authorization: Bearer {ACCESS_TOKEN}
+Content-Type: application/json
+```
+
+### Request JSON
+
+```json
+{
+  "title": "업데이트 안내",
+  "category": "UPDATE",
+  "content": "신규 기능이 추가되었습니다."
+}
+```
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "message": "공지사항 등록 완료",
+  "data": null
+}
+```
+
+---
+
+## 6. 공지사항 수정 (관리자)
+
+### URL
+
+```http
+PUT /notices/{noticeId}
+```
+
+### Header
+
+```http
+Authorization: Bearer {ACCESS_TOKEN}
+Content-Type: application/json
+```
+
+### Request JSON
+
+```json
+{
+  "title": "업데이트 안내 (수정)",
+  "category": "UPDATE",
+  "content": "업데이트 내용이 변경되었습니다."
+}
+```
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "message": "공지사항 수정 완료",
+  "data": null
+}
+```
+
+---
+
+## 7. 공지사항 삭제 (관리자)
+
+### URL
+
+```http
+DELETE /notices/{noticeId}
+```
+
+### Header
+
+```http
+Authorization: Bearer {ACCESS_TOKEN}
+```
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "message": "공지사항 삭제 완료",
+  "data": null
+}
+```
+
+---
+
+## 8. 에러 응답 예시
+
+### 인증 실패 (401)
+
+```json
+{
+  "success": false,
+  "message": "로그인이 필요합니다.",
+  "data": null
+}
+```
+
+### 권한 없음 / 잘못된 요청 (400)
+
+```json
+{
+  "success": false,
+  "message": "공지사항 수정 실패",
+  "data": null
+}
+```
+
+---
+
+## 9. AI 프론트엔드 구현 지침
+
+AI는 다음을 반드시 준수해야 한다.
+
+* 기존 공지사항 페이지 디자인을 **절대 수정하지 말 것**
+* API 요청/응답 로직만 구현할 것
+* category 값은 코드값 그대로 사용
+* 목록 ↔ 상세 전환 시 새로고침 없이 처리
+
+---
+
+## 10. AI에게 전달할 최종 요청 문장
+
+```text
+너는 ZipCheck 프로젝트의 프론트엔드 개발자다.
+
+아래 API 명세를 기준으로,
+이미 완성된 공지사항 페이지 디자인은 유지한 채
+API 요청/응답 로직만 구현하라.
 
 조건:
-- Vue 3 + Composition API 사용
-- 기존 디자인 스타일 유지
+- Vue 3 + Composition API
 - Axios 단일 인스턴스 사용
-- 더미 데이터 금지
-- API 스펙 변경 금지
+- JWT 인증 헤더 처리
+- 카테고리 탭(중요/일반/업데이트) 연동
 
-구현 대상:
-- /forgot-password 페이지 추가
-- 인증코드 발급 → 인증코드 검증 → 임시 비밀번호 이메일 발송 흐름 구현
-- 성공/실패 메시지 처리
-
-아래 문서를 기준으로 코드를 작성하라.
+아래 문서를 기준으로 구현하라.
 ```
 
 ---
 
-## ✅ 기대 결과물
-
-* 사용자 이메일 기반 비밀번호 재설정 가능
-* 프론트-백엔드 인증 흐름 완성
-* 실제 서비스에서 바로 사용 가능한 수준
-
----
-
-> 본 문서는 ZipCheck 프로젝트의 **Auth 보안 기능 완성도를 높이기 위한 필수 확장 문서**이다.
+> 본 문서는 ZipCheck 공지사항 기능의 **공식 API 계약서**이다.

@@ -2,10 +2,10 @@
 	<div class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-4xl">
 		<div class="mb-8">
 			<h1 class="text-3xl font-bold text-text-main-light dark:text-white mb-2">
-				{{ isEditMode ? '게시글 수정' : '게시글 작성' }}
+				{{ isEditMode ? '공지사항 수정' : '공지사항 작성' }}
 			</h1>
 			<p class="text-text-sub-light dark:text-text-sub-dark">
-				커뮤니티 가이드라인을 준수하여 소중한 의견을 남겨주세요.
+				새로운 소식이나 중요한 변경사항을 사용자에게 명확하게 전달해주세요.
 			</p>
 		</div>
 		<div
@@ -26,10 +26,9 @@
 						required
 					>
 						<option disabled value="">카테고리를 선택해주세요</option>
-						<option value="FREE">자유게시판</option>
-						<option value="REVIEW">매매후기</option>
-						<option value="QUESTION">동네질문</option>
-						<option value="INFO">정보공유</option>
+						<option value="IMPORTANT">중요</option>
+						<option value="NORMAL">일반</option>
+						<option value="UPDATE">업데이트</option>
 					</select>
 				</div>
 				<div>
@@ -60,23 +59,17 @@
 							class="w-full rounded-lg border-border-light dark:border-border-dark bg-gray-50 dark:bg-zinc-800 text-text-main-light dark:text-white placeholder-text-sub-light dark:placeholder-zinc-500 focus:ring-2 focus:ring-primary focus:border-transparent py-3 px-4 transition-shadow resize-y"
 							id="content"
 							name="content"
-							placeholder="내용을 입력해주세요.
-부적절한 홍보나 비방글은 삭제될 수 있습니다."
+							placeholder="공지사항 내용을 입력해주세요."
 							rows="12"
 							required
 						></textarea>
-						<div
-							class="absolute bottom-4 right-4 text-xs text-text-sub-light dark:text-zinc-500"
-						>
-							{{ form.content.length }} / 2000자
-						</div>
 					</div>
 				</div>
 				<div
 					class="flex items-center justify-end space-x-4 pt-4 border-t border-border-light dark:border-border-dark"
 				>
 					<button
-						@click="router.back()"
+						@click="router.push('/notices')"
 						class="px-6 py-3 rounded-lg text-sm font-medium text-text-sub-light dark:text-gray-300 bg-gray-100 dark:bg-zinc-700 hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors"
 						type="button"
 					>
@@ -93,16 +86,17 @@
 		</div>
 	</div>
 </template>
+
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { createBoard, getBoardById, updateBoard } from '@/api/boards.api.js';
+import { createNotice, getNoticeById, updateNotice } from '@/api/notices.api.js';
 
 const router = useRouter();
 const route = useRoute();
 
-const boardId = ref(route.params.id || null);
-const isEditMode = ref(!!boardId.value);
+const noticeId = ref(route.params.id || null);
+const isEditMode = ref(!!noticeId.value);
 
 const form = reactive({
 	title: '',
@@ -110,18 +104,18 @@ const form = reactive({
 	category: '',
 });
 
-const fetchBoardData = async () => {
+const fetchNoticeData = async () => {
 	if (!isEditMode.value) return;
 	try {
-		const response = await getBoardById(boardId.value);
-		const board = response.data;
-		form.title = board.title;
-		form.content = board.content;
-		form.category = board.category;
+		const response = await getNoticeById(noticeId.value);
+		const notice = response.data;
+		form.title = notice.title;
+		form.content = notice.content;
+		form.category = notice.category;
 	} catch (error) {
-		console.error('Failed to fetch board data for editing:', error);
-		alert('게시글 정보를 불러오는 데 실패했습니다.');
-		router.push('/boards');
+		console.error('Failed to fetch notice data for editing:', error);
+		alert('공지사항 정보를 불러오는 데 실패했습니다.');
+		router.push('/notices');
 	}
 };
 
@@ -131,7 +125,7 @@ const handleSubmit = async () => {
 		return;
 	}
 
-	const boardData = {
+	const noticeData = {
 		title: form.title,
 		content: form.content,
 		category: form.category,
@@ -139,22 +133,21 @@ const handleSubmit = async () => {
 
 	try {
 		if (isEditMode.value) {
-			await updateBoard(boardId.value, boardData);
-			alert('게시글이 성공적으로 수정되었습니다.');
-			router.push(`/boards/${boardId.value}`);
+			await updateNotice(noticeId.value, noticeData);
+			alert('공지사항이 성공적으로 수정되었습니다.');
+			router.push('/notices');
 		} else {
-			await createBoard(boardData);
-			alert('게시글이 성공적으로 등록되었습니다.');
-			router.push('/boards');
+			await createNotice(noticeData);
+			alert('공지사항이 성공적으로 등록되었습니다.');
+			router.push('/notices');
 		}
 	} catch (error) {
-		console.error('Failed to submit board:', error);
+		console.error('Failed to submit notice:', error);
 		// Interceptor will show a generic error alert.
 	}
 };
 
 onMounted(() => {
-	fetchBoardData();
+	fetchNoticeData();
 });
 </script>
-<style scoped></style>

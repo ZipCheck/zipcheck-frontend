@@ -16,17 +16,18 @@
 			>
 		</div>
 		<div class="space-y-4">
-			<div
+			<router-link
 				v-for="notice in recentNotices"
-				:key="notice.id"
+				:key="notice.noticeId"
+				:to="`/notices`"
 				class="flex gap-4 p-3 hover:bg-background-alt rounded-xl transition-colors cursor-pointer items-start"
 			>
 				<div class="mt-1">
 					<span
-						:class="getCategoryClass(notice.category)"
+						:class="categoryClasses[notice.category]"
 						class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"
 					>
-						{{ notice.category }}
+						{{ categoryMap[notice.category] }}
 					</span>
 				</div>
 				<div class="flex-1">
@@ -37,7 +38,7 @@
 						{{ new Date(notice.createdAt).toLocaleDateString() }}
 					</p>
 				</div>
-			</div>
+			</router-link>
 			<div v-if="loading" class="text-center p-4">
 				<p>로딩 중...</p>
 			</div>
@@ -58,24 +59,24 @@ import { getNotices } from '@/api/notices.api.js';
 const notices = ref([]);
 const loading = ref(true);
 
-// Display top 3 recent notices
 const recentNotices = computed(() => notices.value.slice(0, 3));
 
-const getCategoryClass = category => {
-	const classes = {
-		중요: 'bg-red-100 text-red-800',
-		공지: 'bg-blue-100 text-blue-800',
-		일반: 'bg-gray-100 text-gray-800',
-		업데이트: 'bg-green-100 text-green-800',
-	};
-	return classes[category] || classes['일반'];
+const categoryMap = {
+	IMPORTANT: '중요',
+	NORMAL: '일반',
+	UPDATE: '업데이트',
+};
+
+const categoryClasses = {
+	IMPORTANT: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+	NORMAL: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+	UPDATE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
 };
 
 onMounted(async () => {
 	try {
-		const data = await getNotices();
-		// Assuming the API returns notices sorted by date descending
-		notices.value = data || [];
+		const response = await getNotices();
+		notices.value = response.data || [];
 	} catch (error) {
 		console.error('Failed to fetch recent notices:', error);
 	} finally {

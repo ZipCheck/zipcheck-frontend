@@ -21,79 +21,20 @@
 							카테고리
 						</h3>
 						<ul class="space-y-2">
-							<li>
+							<li v-for="cat in categories" :key="cat.value">
 								<label
 									class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors group"
 								>
 									<input
-										checked=""
-										class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-										name="category"
 										type="radio"
+										name="category"
+										:value="cat.value"
+										v-model="selectedCategory"
+										class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
 									/>
 									<span
 										class="text-sm font-medium group-hover:text-primary transition-colors"
-										>전체보기</span
-									>
-								</label>
-							</li>
-							<li>
-								<label
-									class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors group"
-								>
-									<input
-										class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-										name="category"
-										type="radio"
-									/>
-									<span
-										class="text-sm font-medium group-hover:text-primary transition-colors"
-										>자유게시판</span
-									>
-								</label>
-							</li>
-							<li>
-								<label
-									class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors group"
-								>
-									<input
-										class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-										name="category"
-										type="radio"
-									/>
-									<span
-										class="text-sm font-medium group-hover:text-primary transition-colors"
-										>매매후기</span
-									>
-								</label>
-							</li>
-							<li>
-								<label
-									class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors group"
-								>
-									<input
-										class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-										name="category"
-										type="radio"
-									/>
-									<span
-										class="text-sm font-medium group-hover:text-primary transition-colors"
-										>동네질문</span
-									>
-								</label>
-							</li>
-							<li>
-								<label
-									class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors group"
-								>
-									<input
-										class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-										name="category"
-										type="radio"
-									/>
-									<span
-										class="text-sm font-medium group-hover:text-primary transition-colors"
-										>인테리어</span
+										>{{ cat.label }}</span
 									>
 								</label>
 							</li>
@@ -105,22 +46,35 @@
 						<div class="text-sm text-text-sub-light dark:text-text-sub-dark">
 							총
 							<span class="font-bold text-gray-900 dark:text-white">{{
-								boards.length
+								filteredBoards.length
 							}}</span
 							>개의 글이 있습니다.
 						</div>
 						<div class="flex items-center gap-2">
 							<select
+								v-model="sortOrder"
+								@change="fetchBoards"
 								class="form-select text-sm border-gray-200 dark:border-gray-700 rounded-lg bg-surface-light dark:bg-surface-dark focus:border-primary focus:ring-primary py-2 pr-8 pl-3 cursor-pointer"
 							>
-								<option>최신순</option>
-								<option>인기순</option>
+								<option value="latest">최신순</option>
+								<option value="likes">인기순</option>
 							</select>
 						</div>
 					</div>
-					<div class="space-y-4">
+
+					<div v-if="loading" class="text-center py-10">
+						<p>게시글을 불러오는 중...</p>
+					</div>
+					<div v-else-if="error" class="text-center py-10 text-red-500">
+						<p>오류가 발생했습니다: {{ error.message }}</p>
+					</div>
+					<div v-else-if="filteredBoards.length === 0" class="text-center py-10">
+						<p>표시할 게시글이 없습니다.</p>
+					</div>
+
+					<div v-else class="space-y-4">
 						<router-link
-							v-for="board in boards"
+							v-for="board in filteredBoards"
 							:key="board.boardId"
 							:to="`/boards/${board.boardId}`"
 						>
@@ -131,40 +85,33 @@
 									<div class="flex-1">
 										<div class="flex items-center gap-2 mb-2">
 											<span
-												class="px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-												>{{ board.category || '자유게시판' }}</span
+												class="px-2 py-0.5 rounded text-xs font-bold"
+												:class="categoryStyles[board.category]"
 											>
+												{{ categoryMap[board.category] || '기타' }}
+											</span>
 											<span
 												class="text-xs text-text-sub-light dark:text-text-sub-dark"
-												>{{
-													new Date(board.createdAt).toLocaleDateString()
-												}}</span
 											>
+												{{ new Date(board.createdAt).toLocaleDateString() }}
+											</span>
 										</div>
 										<h2
 											class="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-primary-hover transition-colors"
 										>
 											{{ board.title }}
 										</h2>
-										<p
-											class="text-sm text-text-sub-light dark:text-text-sub-dark mb-4 line-clamp-2"
-										>
-											{{ board.content }}
-										</p>
-										<div class="flex items-center justify-between">
+										<div class="flex items-center justify-between mt-4">
 											<div class="flex items-center gap-3">
 												<div class="flex items-center gap-2">
 													<img
 														alt="User Avatar"
-														class="w-6 h-6 rounded-full"
-														:src="
-															board.writerAvatar ||
-															'https://lh3.googleusercontent.com/a/ACg8ocK_3_4c-B4o-2T_nS5sL_2n3-jBC_0iL_w'
-														"
+														class="w-6 h-6 rounded-full bg-gray-200"
+														src="@/assets/images/default-avatar.svg"
 													/>
 													<span
 														class="text-xs font-medium text-gray-700 dark:text-gray-300"
-														>{{ board.writer }}</span
+														>{{ board.nickname }}</span
 													>
 												</div>
 											</div>
@@ -179,28 +126,12 @@
 												</div>
 												<div class="flex items-center gap-1">
 													<span class="material-symbols-outlined text-[14px]"
-														>chat_bubble_outline</span
-													>
-													<span>{{ board.commentCount || 0 }}</span>
-												</div>
-												<div class="flex items-center gap-1">
-													<span class="material-symbols-outlined text-[14px]"
 														>visibility</span
 													>
-													<span>{{ board.viewCount || 0 }}</span>
+													<span>{{ board.hit || 0 }}</span>
 												</div>
 											</div>
 										</div>
-									</div>
-									<div
-										v-if="board.thumbnail"
-										class="hidden sm:block w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0"
-									>
-										<img
-											alt="Apartment Interior"
-											class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-											:src="board.thumbnail"
-										/>
 									</div>
 								</div>
 							</article>
@@ -214,20 +145,60 @@
 		</main>
 	</div>
 </template>
+
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { getBoards } from '@/api/boards.api.js';
 
 const boards = ref([]);
+const loading = ref(true);
+const error = ref(null);
+const sortOrder = ref('latest');
+const selectedCategory = ref('ALL');
+
+const categories = [
+	{ value: 'ALL', label: '전체보기' },
+	{ value: 'FREE', label: '자유게시판' },
+	{ value: 'REVIEW', label: '매매후기' },
+	{ value: 'QUESTION', label: '동네질문' },
+	{ value: 'INFO', label: '정보공유' },
+];
+
+const categoryMap = {
+	FREE: '자유게시판',
+	REVIEW: '매매후기',
+	QUESTION: '동네질문',
+	INFO: '정보공유',
+};
+
+const categoryStyles = {
+	FREE: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+	REVIEW: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+	QUESTION: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+	INFO: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+};
+
+const filteredBoards = computed(() => {
+	if (selectedCategory.value === 'ALL') {
+		return boards.value;
+	}
+	return boards.value.filter(
+		board => board.category === selectedCategory.value,
+	);
+});
 
 const fetchBoards = async () => {
+	loading.value = true;
+	error.value = null;
 	try {
-		const data = await getBoards();
-		// Assuming the response is the array of boards
-		boards.value = data || [];
-	} catch (error) {
-		console.error('Failed to fetch boards:', error);
+		const response = await getBoards(sortOrder.value);
+		boards.value = response.data || [];
+	} catch (err) {
+		console.error('Failed to fetch boards:', err);
+		error.value = err;
 		// The interceptor will handle user notification
+	} finally {
+		loading.value = false;
 	}
 };
 

@@ -6,6 +6,7 @@ import BoardWritePage from '@/pages/BoardWritePage.vue';
 import LoginPage from '@/pages/LoginPage.vue';
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage.vue';
 import NoticesListPage from '@/pages/NoticesListPage.vue';
+import NoticeWritePage from '@/pages/NoticeWritePage.vue';
 import SignupPage from '@/pages/SignupPage.vue';
 import MapPage from '@/pages/MapPage.vue';
 import MyPage from '@/pages/MyPage.vue';
@@ -33,16 +34,31 @@ const router = createRouter({
 			meta: { requiresAuth: true },
 		},
 		{
+			path: '/boards/edit/:id',
+			component: BoardWritePage,
+			meta: { requiresAuth: true },
+		},
+		{
 			path: '/login',
 			component: LoginPage,
 		},
-    {
-      path: '/forgot-password',
-      component: ForgotPasswordPage,
-    },
+		{
+			path: '/forgot-password',
+			component: ForgotPasswordPage,
+		},
 		{
 			path: '/notices',
 			component: NoticesListPage,
+		},
+		{
+			path: '/notices/new',
+			component: NoticeWritePage,
+			meta: { requiresAuth: true },
+		},
+		{
+			path: '/notices/edit/:id',
+			component: NoticeWritePage,
+			meta: { requiresAuth: true },
 		},
 		{
 			path: '/signup',
