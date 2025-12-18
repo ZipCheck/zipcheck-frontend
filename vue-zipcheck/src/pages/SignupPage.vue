@@ -51,25 +51,42 @@
 				<div>
 					<label
 						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-						for="email"
+						for="email-username"
 						>이메일 주소</label
 					>
-					<div class="relative">
-						<div
-							class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-						>
-							<span class="material-icons-round text-gray-400 text-xl"></span>
-						</div>
+					<div class="flex gap-2">
 						<input
-							v-model="email"
-							class="block w-full pl-10 pr-3 py-3 border border-input-border-light dark:border-input-border-dark rounded-xl leading-5 bg-white dark:bg-zinc-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all sm:text-sm dark:text-white"
-							id="email"
-							name="email"
-							placeholder="example@email.com"
+							v-model="emailUsername"
+							class="block w-full pl-3 pr-3 py-3 border border-input-border-light dark:border-input-border-dark rounded-xl leading-5 bg-white dark:bg-zinc-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all sm:text-sm dark:text-white"
+							id="email-username"
+							name="email-username"
+							placeholder="아이디"
 							required
-							type="email"
+							type="text"
 						/>
+						<span
+							class="flex items-center text-text-sub-light dark:text-text-sub-dark"
+							>@</span
+						>
+						<select
+							v-model="selectedDomain"
+							class="block w-full py-3 px-3 border border-input-border-light dark:border-input-border-dark rounded-xl leading-5 bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all sm:text-sm"
+						>
+							<option value="직접 입력">직접 입력</option>
+							<option value="gmail.com">gmail.com</option>
+							<option value="naver.com">naver.com</option>
+						</select>
 					</div>
+					<input
+						v-if="selectedDomain === '직접 입력'"
+						v-model="customDomain"
+						class="mt-2 block w-full pl-3 pr-3 py-3 border border-input-border-light dark:border-input-border-dark rounded-xl leading-5 bg-white dark:bg-zinc-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all sm:text-sm dark:text-white"
+						id="custom-domain"
+						name="custom-domain"
+						placeholder="직접 입력"
+						required
+						type="text"
+					/>
 				</div>
 				<div>
 					<label
@@ -179,7 +196,9 @@ import defaultAvatar from '@/assets/images/default-avatar.svg';
 
 const router = useRouter();
 
-const email = ref('');
+const emailUsername = ref('');
+const selectedDomain = ref('직접 입력'); // Default to direct input
+const customDomain = ref('');
 const nickname = ref('');
 const password = ref('');
 const passwordConfirm = ref('');
@@ -209,8 +228,15 @@ const handleSignup = async () => {
 		return;
 	}
 
+	let fullEmail;
+	if (selectedDomain.value === '직접 입력') {
+		fullEmail = `${emailUsername.value}@${customDomain.value}`;
+	} else {
+		fullEmail = `${emailUsername.value}@${selectedDomain.value}`;
+	}
+
 	const formData = new FormData();
-	formData.append('email', email.value);
+	formData.append('email', fullEmail);
 	formData.append('nickname', nickname.value);
 	formData.append('password', password.value);
 	if (profileImage.value) {
