@@ -70,7 +70,8 @@ const categoryMap = {
 const categoryClasses = {
 	IMPORTANT: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
 	NORMAL: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
-	UPDATE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+	UPDATE:
+		'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
 };
 
 onMounted(async () => {

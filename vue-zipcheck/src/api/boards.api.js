@@ -11,11 +11,12 @@ import http from './http';
  *   createdAt: string,
  *   nickname: string,
  *   likeCount: number,
- *   liked: boolean
+ *   isLiked: boolean,
+ *   commentCount: number // Added for comment count
  * }>>}
  */
 export const getBoards = (order = 'latest') => {
-	return http.get('/boards', { params: { order } }).then(response => response.data);
+	return http.get('/boards', { params: { order } });
 };
 
 /**
@@ -31,11 +32,12 @@ export const getBoards = (order = 'latest') => {
  *   updatedAt: string | null,
  *   nickname: string,
  *   likeCount: number,
- *   liked: boolean
+ *   isLiked: boolean,
+ *   commentCount: number // Added for comment count
  * }>}
  */
 export const getBoardById = id => {
-	return http.get(`/boards/${id}`).then(response => response.data);
+	return http.get(`/boards/${id}`);
 };
 
 /**
@@ -69,15 +71,31 @@ export const deleteBoard = id => {
 /**
  * 게시글 좋아요를 토글합니다.
  * @param {number | string} id
- * @returns {Promise<boolean>} API 응답에서 좋아요 적용 여부를 나타내는 boolean 값
+ * @returns {Promise<{
+ *   success: boolean,
+ *   data: boolean
+ * }>} API 응답에서 좋아요 적용 여부를 나타내는 boolean 값
  */
 export const likeBoard = id => {
-	return http.post(`/boards/${id}/like`).then(response => response.data);
+	return http.post(`/boards/${id}/like`);
 };
 
 /**
- * @returns {Promise<Array<{boardId: number, title: string, writer: string, createdAt: string}>>}
+ * 내가 작성한 게시글 목록을 조회합니다.
+ * @returns {Promise<{
+ *   success: boolean,
+ *   data: Array<{
+ *     boardId: number,
+ *     title: string,
+ *     category: 'FREE' | 'REVIEW' | 'QUESTION' | 'INFO',
+ *     hit: number,
+ *     createdAt: string,
+ *     nickname: string,
+ *     likeCount: number,
+ *     isLiked: boolean
+ *   }>
+ * }>}
  */
-// export const getMyBoards = () => {
-// 	return http.get('/boards/me').then(response => response.data);
-// };
+export const getMyBoards = () => {
+	return http.get('/boards/my');
+};

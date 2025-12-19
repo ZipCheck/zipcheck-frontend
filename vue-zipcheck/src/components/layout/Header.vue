@@ -111,8 +111,5 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { authStore } from '@/stores/auth.store';
-
-const isAuthenticated = computed(() => authStore.isAuthenticated());
+import { isAuthenticated } from '@/stores/auth.store';
 </script>

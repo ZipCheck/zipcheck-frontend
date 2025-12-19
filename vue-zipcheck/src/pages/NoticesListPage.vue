@@ -29,7 +29,11 @@
 					{{ cat.label }}
 				</button>
 			</div>
-			<button @click="router.push('/notices/new')" class="px-4 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors">
+			<button
+				v-if="user && user.role === 'ADMIN'"
+				@click="router.push('/notices/new')"
+				class="px-4 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
+			>
 				공지 작성
 			</button>
 		</div>
@@ -81,17 +85,28 @@
 						>
 					</div>
 				</div>
-				<div
-					v-if="activeNoticeId === notice.noticeId"
-					class="px-6 pb-6 pt-2"
-				>
-					<div v-if="noticeDetails[notice.noticeId]"
+				<div v-if="activeNoticeId === notice.noticeId" class="px-6 pb-6 pt-2">
+					<div
+						v-if="noticeDetails[notice.noticeId]"
 						class="prose dark:prose-invert max-w-none text-text-main-light dark:text-text-main-dark border-t border-border-light dark:border-border-dark pt-4"
-						>
+					>
 						<div v-html="noticeDetails[notice.noticeId]"></div>
-						<div class="flex justify-end gap-2 mt-4 not-prose">
-							<button @click.stop="handleEdit(notice.noticeId)" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary transition-colors px-3 py-1 rounded-md">수정</button>
-							<button @click.stop="handleDelete(notice.noticeId)" class="text-sm font-medium text-red-500 hover:text-red-700 transition-colors px-3 py-1 rounded-md">삭제</button>
+						<div
+							v-if="user && user.role === 'ADMIN'"
+							class="flex justify-end gap-2 mt-4 not-prose"
+						>
+							<button
+								@click.stop="handleEdit(notice.noticeId)"
+								class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary transition-colors px-3 py-1 rounded-md"
+							>
+								수정
+							</button>
+							<button
+								@click.stop="handleDelete(notice.noticeId)"
+								class="text-sm font-medium text-red-500 hover:text-red-700 transition-colors px-3 py-1 rounded-md"
+							>
+								삭제
+							</button>
 						</div>
 					</div>
 					<div v-else class="text-center">
@@ -107,6 +122,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getNotices, getNoticeById, deleteNotice } from '@/api/notices.api.js';
+import { user } from '@/stores/auth.store';
 
 const router = useRouter();
 const notices = ref([]);
@@ -132,14 +148,16 @@ const categoryMap = {
 const categoryClasses = {
 	IMPORTANT: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
 	NORMAL: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
-	UPDATE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+	UPDATE:
+		'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
 };
 
 const fetchNotices = async () => {
 	loading.value = true;
 	error.value = null;
 	try {
-		const categoryParam = selectedCategory.value === 'ALL' ? undefined : selectedCategory.value;
+		const categoryParam =
+			selectedCategory.value === 'ALL' ? undefined : selectedCategory.value;
 		const response = await getNotices(categoryParam);
 		notices.value = response.data || [];
 	} catch (err) {
@@ -150,13 +168,13 @@ const fetchNotices = async () => {
 	}
 };
 
-const changeCategory = (category) => {
+const changeCategory = category => {
 	selectedCategory.value = category;
 	activeNoticeId.value = null; // Close any open notice when changing category
 	fetchNotices();
 };
 
-const handleNoticeClick = async (noticeId) => {
+const handleNoticeClick = async noticeId => {
 	if (activeNoticeId.value === noticeId) {
 		activeNoticeId.value = null; // Close if already open
 		return;
@@ -171,16 +189,17 @@ const handleNoticeClick = async (noticeId) => {
 			noticeDetails.value[noticeId] = response.data.content;
 		} catch (err) {
 			console.error('Failed to fetch notice content:', err);
-			noticeDetails.value[noticeId] = '<p>공지 내용을 불러오는데 실패했습니다.</p>';
+			noticeDetails.value[noticeId] =
+				'<p>공지 내용을 불러오는데 실패했습니다.</p>';
 		}
 	}
 };
 
-const handleEdit = (noticeId) => {
+const handleEdit = noticeId => {
 	router.push(`/notices/edit/${noticeId}`);
 };
 
-const handleDelete = async (noticeId) => {
+const handleDelete = async noticeId => {
 	if (!confirm('정말로 이 공지사항을 삭제하시겠습니까?')) {
 		return;
 	}

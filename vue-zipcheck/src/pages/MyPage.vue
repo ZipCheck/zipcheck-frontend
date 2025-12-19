@@ -25,15 +25,8 @@ const fetchUserInfo = async () => {
 		const data = await getMyInfo();
 		user.value = data;
 	} catch (error) {
-		console.error('Failed to fetch user info, using mock data:', error);
-		// Mock data for development when the backend is not available
-		user.value = {
-			email: 'user@example.com',
-			nickname: '임시사용자',
-			profileImageUrl: null,
-			commentNotifications: true,
-			priceChangeNotifications: true,
-		};
+		console.error('Failed to fetch user info:', error);
+		// The interceptor in http.js will handle the error (e.g., redirect to login)
 	}
 };
 

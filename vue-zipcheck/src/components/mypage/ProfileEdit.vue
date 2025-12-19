@@ -21,11 +21,7 @@
 						class="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-md"
 					>
 						<img
-							:src="
-								profileImagePreview ||
-								user.profileImageUrl ||
-								'https://via.placeholder.com/150'
-							"
+							:src="profileImagePreview"
 							alt="Profile"
 							class="w-full h-full object-cover"
 						/>
@@ -126,52 +122,6 @@
 				</div>
 			</div>
 
-			<!-- Notification Settings Section -->
-			<div class="border-t border-gray-100 dark:border-gray-700 pt-8 space-y-4">
-				<h3
-					class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2"
-				>
-					<span class="material-symbols-outlined text-primary"
-						>notifications</span
-					>
-					알림 설정
-				</h3>
-				<div
-					class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800"
-				>
-					<span class="font-medium text-gray-700 dark:text-gray-300"
-						>댓글 알림</span
-					>
-					<label class="relative inline-flex items-center cursor-pointer">
-						<input
-							type="checkbox"
-							v-model="commentNotifications"
-							class="sr-only peer"
-						/>
-						<div
-							class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-yellow-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"
-						></div>
-					</label>
-				</div>
-				<div
-					class="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800"
-				>
-					<span class="font-medium text-gray-700 dark:text-gray-300"
-						>찜한 매물 가격 변동 알림</span
-					>
-					<label class="relative inline-flex items-center cursor-pointer">
-						<input
-							type="checkbox"
-							v-model="priceChangeNotifications"
-							class="sr-only peer"
-						/>
-						<div
-							class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-yellow-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"
-						></div>
-					</label>
-				</div>
-			</div>
-
 			<!-- Action Buttons -->
 			<div class="pt-6 flex items-center justify-end gap-4">
 				<button
@@ -195,13 +145,8 @@
 
 <script setup>
 import { inject, ref, watch } from 'vue';
-import {
-	updateNickname,
-	updatePassword,
-	uploadProfileImage,
-	updateNotificationSettings,
-	getMyInfo,
-} from '@/api/users.api.js';
+import { updateMyProfile, updatePassword, getMyInfo } from '@/api/users.api.js';
+import defaultAvatar from '@/assets/images/default-avatar.svg';
 
 const user = inject('user');
 const loading = ref(false);
@@ -211,11 +156,11 @@ const editableNickname = ref('');
 const currentPassword = ref('');
 const newPassword = ref('');
 const newPasswordConfirm = ref('');
-const commentNotifications = ref(true);
-const priceChangeNotifications = ref(true);
-const profileImageFile = ref(null);
 const profileImagePreview = ref(null);
 const fileInput = ref(null);
+
+let originalNickname = '';
+let originalProfileImage = null;
 
 // Initialize form state when user data is available
 watch(
@@ -223,10 +168,11 @@ watch(
 	newUser => {
 		if (newUser) {
 			editableNickname.value = newUser.nickname;
-			// Assuming notification settings are part of the user object
-			// If not, they would need to be fetched separately.
-			commentNotifications.value = newUser.commentNotifications ?? true;
-			priceChangeNotifications.value = newUser.priceChangeNotifications ?? true;
+			profileImagePreview.value = newUser.profileImage || defaultAvatar;
+
+			// Store original state to detect changes
+			originalNickname = newUser.nickname;
+			originalProfileImage = newUser.profileImage || defaultAvatar;
 		}
 	},
 	{ immediate: true },
@@ -239,7 +185,6 @@ const triggerFileInput = () => {
 const handleFileChange = event => {
 	const file = event.target.files[0];
 	if (file) {
-		profileImageFile.value = file;
 		const reader = new FileReader();
 		reader.onload = e => {
 			profileImagePreview.value = e.target.result;
@@ -252,46 +197,54 @@ const handleProfileUpdate = async () => {
 	loading.value = true;
 	try {
 		const promises = [];
+		let profileChanged = false;
 
-		// 1. Update profile image
-		if (profileImageFile.value) {
-			const formData = new FormData();
-			formData.append('profileImage', profileImageFile.value);
-			promises.push(uploadProfileImage(formData));
+		// 1. Check for profile data changes (nickname or image)
+		const newNickname = editableNickname.value;
+		const newProfileImage = profileImagePreview.value;
+
+		if (
+			newNickname !== originalNickname ||
+			newProfileImage !== originalProfileImage
+		) {
+			profileChanged = true;
 		}
 
-		// 2. Update nickname
-		if (editableNickname.value !== user.value.nickname) {
-			promises.push(updateNickname(editableNickname.value));
+		if (profileChanged) {
+			const profileData = {
+				nickname: newNickname,
+				profileImage:
+					newProfileImage === defaultAvatar ? null : newProfileImage,
+			};
+			promises.push(updateMyProfile(profileData));
 		}
 
-		// 3. Update password
+		// 2. Check for password change
 		if (newPassword.value) {
 			if (newPassword.value !== newPasswordConfirm.value) {
 				alert('새 비밀번호가 일치하지 않습니다.');
+				loading.value = false;
 				return;
 			}
 			promises.push(updatePassword(currentPassword.value, newPassword.value));
 		}
 
-		// 4. Update notification settings
-		// This part is tricky without knowing the original state.
-		// We'll just send the current state.
-		const notificationSettings = {
-			commentNotifications: commentNotifications.value,
-			priceChangeNotifications: priceChangeNotifications.value,
-		};
-		promises.push(updateNotificationSettings(notificationSettings));
+		if (promises.length === 0) {
+			alert('변경된 내용이 없습니다.');
+			loading.value = false;
+			return;
+		}
 
 		await Promise.all(promises);
 
 		alert('프로필이 성공적으로 업데이트되었습니다.');
-		// Optionally, refresh user data
+
+		// Refresh global user state
 		const updatedUser = await getMyInfo();
 		user.value = updatedUser;
 	} catch (error) {
 		console.error('프로필 업데이트 실패:', error);
-		alert('프로필 업데이트 중 오류가 발생했습니다.');
+		// Interceptor shows alerts
 	} finally {
 		loading.value = false;
 	}

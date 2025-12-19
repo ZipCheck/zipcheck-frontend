@@ -119,7 +119,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { login } from '@/api/auth.api';
-import { authStore } from '@/stores/auth.store';
+import { authStore, user } from '@/stores/auth.store';
 
 const router = useRouter();
 const email = ref('');
@@ -142,9 +142,12 @@ const handleLogin = async () => {
 			localStorage.removeItem('rememberedEmail');
 		}
 
-		const data = await login({ email: email.value, password: password.value });
-		if (data.accessToken) {
-			authStore.setToken(data.accessToken);
+		const loginResponseData = await login({
+			email: email.value,
+			password: password.value,
+		});
+		if (loginResponseData.accessToken) {
+			authStore.setToken(loginResponseData.accessToken);
 			router.push('/');
 		}
 	} catch (error) {

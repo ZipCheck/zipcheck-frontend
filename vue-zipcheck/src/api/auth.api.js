@@ -13,28 +13,24 @@ export const logout = () => {
 };
 
 /**
- * @param {FormData} formData
+ * @param {object} signupData
  * @returns {Promise<any>}
  */
-export const signup = formData => {
-	return http.post('/auth/signup', formData, {
-		headers: {
-			'Content-Type': 'multipart/form-data',
-		},
-	});
+export const signup = signupData => {
+	return http.post('/auth/signup', signupData);
 };
 
 /**
  * @param {string} email
  */
 export const sendPasswordResetCode = email => {
-	return http.post('/auth/password/code', { email });
+	return http.post('/auth/password/reset', { email });
 };
 
 /**
  * @param {string} email
  * @param {string} authCode
  */
-export const resetPassword = (email, authCode) => {
-	return http.post('/auth/password/reset', { email, authCode });
+export const resetPassword = (email, code) => {
+	return http.post('/auth/password/reset-confirm', { email, code });
 };

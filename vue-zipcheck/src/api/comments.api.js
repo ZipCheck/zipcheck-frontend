@@ -1,13 +1,17 @@
 import http from './http';
 
 /**
- * @param {number | string} boardId
- * @param {{ content: string }} commentData
+ * @param {{boardId: number | string, content: string}} commentData
  */
-export const createComment = (boardId, commentData) => {
-	return http
-		.post(`/boards/${boardId}/comments`, commentData)
-		.then(response => response.data);
+export const createComment = commentData => {
+	return http.post('/comments', commentData);
+};
+
+/**
+ * @param {number | string} boardId
+ */
+export const getCommentsByBoardId = boardId => {
+	return http.get(`/comments/board/${boardId}`);
 };
 
 /**

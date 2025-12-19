@@ -235,16 +235,19 @@ const handleSignup = async () => {
 		fullEmail = `${emailUsername.value}@${selectedDomain.value}`;
 	}
 
-	const formData = new FormData();
-	formData.append('email', fullEmail);
-	formData.append('nickname', nickname.value);
-	formData.append('password', password.value);
-	if (profileImage.value) {
-		formData.append('profileImage', profileImage.value);
+	const signupData = {
+		email: fullEmail,
+		nickname: nickname.value,
+		password: password.value,
+	};
+
+	// Only include profileImage if a new image was uploaded
+	if (imagePreview.value !== defaultAvatar) {
+		signupData.profileImage = imagePreview.value;
 	}
 
 	try {
-		await signup(formData);
+		await signup(signupData);
 		alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
 		router.push('/login');
 	} catch (error) {

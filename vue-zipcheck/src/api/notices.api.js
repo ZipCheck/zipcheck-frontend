@@ -16,7 +16,8 @@ import http from './http';
  * }>}
  */
 export const getNotices = category => {
-	return http.get('/notices', { params: { category } }).then(response => response.data);
+	return http
+		.get('/notices', { params: { category } });
 };
 
 /**
@@ -36,7 +37,7 @@ export const getNotices = category => {
  * }>}
  */
 export const getNoticeById = id => {
-	return http.get(`/notices/${id}`).then(response => response.data);
+	return http.get(`/notices/${id}`);
 };
 
 /**
@@ -45,7 +46,7 @@ export const getNoticeById = id => {
  * @returns {Promise<{success: boolean, message: string, data: null}>}
  */
 export const createNotice = noticeData => {
-	return http.post('/notices', noticeData).then(response => response.data);
+	return http.post('/notices', noticeData);
 };
 
 /**
@@ -55,7 +56,7 @@ export const createNotice = noticeData => {
  * @returns {Promise<{success: boolean, message: string, data: null}>}
  */
 export const updateNotice = (id, noticeData) => {
-	return http.put(`/notices/${id}`, noticeData).then(response => response.data);
+	return http.put(`/notices/${id}`, noticeData);
 };
 
 /**
@@ -64,5 +65,5 @@ export const updateNotice = (id, noticeData) => {
  * @returns {Promise<{success: boolean, message: string, data: null}>}
  */
 export const deleteNotice = id => {
-	return http.delete(`/notices/${id}`).then(response => response.data);
+	return http.delete(`/notices/${id}`);
 };

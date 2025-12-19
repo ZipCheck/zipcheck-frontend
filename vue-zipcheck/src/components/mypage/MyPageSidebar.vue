@@ -31,6 +31,14 @@
 					<span class="material-symbols-outlined text-xl">favorite</span>
 					찜한 매물
 				</router-link>
+				<router-link
+					to="/mypage/notifications"
+					class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl transition-colors"
+					active-class="bg-primary/10 text-gray-900 dark:text-yellow-400 font-medium border border-primary/20"
+				>
+					<span class="material-symbols-outlined text-xl">notifications</span>
+					알림 설정
+				</router-link>
 
 				<div class="border-t border-gray-100 dark:border-gray-700 my-2"></div>
 				<a

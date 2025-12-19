@@ -1,18 +1,20 @@
 import axios from 'axios';
-import { authStore } from '@/stores/auth.store';
+import { authStore, user } from '@/stores/auth.store';
 
 const http = axios.create({
 	baseURL: import.meta.env.VITE_API_BASE_URL,
 	headers: {
 		'Content-Type': 'application/json',
 	},
+	withCredentials: true, // For HttpOnly cookies
 });
 
 // Request interceptor to add the token to headers
 http.interceptors.request.use(
 	config => {
 		const accessToken = authStore.getToken();
-		if (accessToken) {
+		// Do not add token for reissue requests
+		if (accessToken && config.url !== '/auth/reissue') {
 			config.headers.Authorization = `Bearer ${accessToken}`;
 		}
 		return config;
@@ -22,47 +24,112 @@ http.interceptors.request.use(
 	},
 );
 
+let isRetrying = false;
+const failedQueue = [];
+
+const processQueue = (error, token = null) => {
+	failedQueue.forEach(prom => {
+		if (error) {
+			prom.reject(error);
+		} else {
+			prom.resolve(token);
+		}
+	});
+	failedQueue.length = 0;
+};
+
 // Response interceptor to handle API responses
 http.interceptors.response.use(
 	response => {
-		// Backend can indicate success:false for business logic errors
+		// Special handling for reissue response to get the new token from header
+		if (response.config.url === '/auth/reissue') {
+			const newAccessToken = response.headers.authorization?.split(' ')[1];
+			if (newAccessToken) {
+				authStore.setToken(newAccessToken);
+			}
+			// Return the new token so waiting requests can use it
+			return newAccessToken;
+		}
+
+		// The API I previously fixed returns response.data which has its own data property
+		// I will return the whole response from the interceptor now and let the API layers handle it.
+		// No, the original dev wanted this. I will stick to it.
 		if (response.data && response.data.success === false) {
 			alert(response.data.message || '오류가 발생했습니다.');
 			return Promise.reject(
 				new Error(response.data.message || 'Backend Error'),
 			);
 		}
-		return response.data; // Return only the data part of the response
+		return response.data;
 	},
-	error => {
-		// To re-enable network error popups, set VITE_DISABLE_NETWORK_ERROR_REDIRECT to 'false' or remove it from .env
+	async error => {
+		const originalRequest = error.config;
+
+		// Handle 401 Unauthorized
+		if (
+			error.response?.status === 401 &&
+			originalRequest.url !== '/auth/login'
+		) {
+			if (isRetrying) {
+				// If a reissue is already in progress, queue the failed request
+				return new Promise((resolve, reject) => {
+					failedQueue.push({ resolve, reject });
+				})
+					.then(token => {
+						originalRequest.headers['Authorization'] = 'Bearer ' + token;
+						return http(originalRequest);
+					})
+					.catch(err => {
+						return Promise.reject(err);
+					});
+			}
+
+			isRetrying = true;
+			originalRequest._retry = true; // Mark as retried
+
+			try {
+				const reissueResponse = await http.post('/auth/reissue');
+				// The success interceptor will handle setting the new token from headers
+				// and reissueResponse will be the new token
+				const newAccessToken = reissueResponse;
+
+				if (newAccessToken) {
+					processQueue(null, newAccessToken);
+					originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+					return http(originalRequest); // Retry original request
+				}
+			} catch (reissueError) {
+				processQueue(reissueError, null);
+				authStore.clearToken();
+				user.value = null; // Clear user state
+				alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+				window.location.href = '/login';
+				return Promise.reject(reissueError);
+			} finally {
+				isRetrying = false;
+			}
+		}
+
+		// Handle other errors
 		const isNetworkErrorDisabled =
 			import.meta.env.VITE_DISABLE_NETWORK_ERROR_REDIRECT === 'true';
 
-		if (error.response) {
-			// Handle HTTP error codes
-			if (error.response.status === 401) {
-				// Unauthorized: always handle
-				authStore.clearToken();
-				alert('인증에 실패했습니다. 다시 로그인해주세요.');
-				window.location.href = '/login';
+		if (!isNetworkErrorDisabled) {
+			if (error.response) {
+				// For non-401 server errors
+				const errorMessage =
+					error.response.data?.message ||
+					'알 수 없는 서버 오류가 발생했습니다.';
+				alert(errorMessage);
+			} else if (error.request) {
+				// For network errors where no response was received
+				alert('서버에 연결할 수 없습니다. 네트워크를 확인해주세요.');
 			} else {
-				// Handle other HTTP errors (404, 500, etc.)
-				if (!isNetworkErrorDisabled) {
-					const errorMessage =
-						error.response.data?.message ||
-						'알 수 없는 서버 오류가 발생했습니다.';
-					alert(`${errorMessage} 홈페이지로 이동합니다.`);
-					window.location.href = '/';
-				}
-			}
-		} else {
-			// Handle network errors (e.g., connection refused)
-			if (!isNetworkErrorDisabled) {
-				alert('네트워크 연결에 문제가 있습니다. 홈페이지로 이동합니다.');
-				window.location.href = '/';
+				// For other errors
+				alert('요청 중 오류가 발생했습니다.');
 			}
 		}
+
 		return Promise.reject(error);
 	},
 );

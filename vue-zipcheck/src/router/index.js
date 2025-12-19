@@ -13,16 +13,17 @@ import MyPage from '@/pages/MyPage.vue';
 import ProfileEdit from '@/components/mypage/ProfileEdit.vue';
 import MyPosts from '@/components/mypage/MyPosts.vue';
 import FavoriteProperties from '@/components/mypage/FavoriteProperties.vue';
+import NotificationSettings from '@/components/mypage/NotificationSettings.vue';
 import MapEmoticonPage from '@/pages/MapEmoticonPage.vue';
 import RealEstateListingDetailPage from '@/pages/RealEstateListingDetailPage.vue';
-import { authStore } from '@/stores/auth.store';
+import { isAuthenticated } from '@/stores/auth.store';
 
 const router = createRouter({
 	history: createWebHistory(),
 	routes: [
 		{
 			path: '/',
-			component: HomePage, // ← 이거 없으면 router-view 비어 있음
+			component: HomePage,
 		},
 		{
 			path: '/boards',
@@ -90,6 +91,10 @@ const router = createRouter({
 					path: 'favorites',
 					component: FavoriteProperties,
 				},
+				{
+					path: 'notifications',
+					component: NotificationSettings,
+				},
 			],
 		},
 		{
@@ -104,10 +109,10 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-	const isAuthenticated = authStore.isAuthenticated();
+	const isAuthenticatedUser = isAuthenticated.value;
 	const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
-	if (requiresAuth && !isAuthenticated) {
+	if (requiresAuth && !isAuthenticatedUser) {
 		alert('로그인이 필요합니다.');
 		next('/login');
 	} else {

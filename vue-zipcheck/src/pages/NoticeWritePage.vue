@@ -90,7 +90,11 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { createNotice, getNoticeById, updateNotice } from '@/api/notices.api.js';
+import {
+	createNotice,
+	getNoticeById,
+	updateNotice,
+} from '@/api/notices.api.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -108,7 +112,7 @@ const fetchNoticeData = async () => {
 	if (!isEditMode.value) return;
 	try {
 		const response = await getNoticeById(noticeId.value);
-		const notice = response.data;
+		const notice = response;
 		form.title = notice.title;
 		form.content = notice.content;
 		form.category = notice.category;

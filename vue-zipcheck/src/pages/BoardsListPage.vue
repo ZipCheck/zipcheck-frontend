@@ -68,7 +68,10 @@
 					<div v-else-if="error" class="text-center py-10 text-red-500">
 						<p>오류가 발생했습니다: {{ error.message }}</p>
 					</div>
-					<div v-else-if="filteredBoards.length === 0" class="text-center py-10">
+					<div
+						v-else-if="filteredBoards.length === 0"
+						class="text-center py-10"
+					>
 						<p>표시할 게시글이 없습니다.</p>
 					</div>
 
@@ -118,8 +121,19 @@
 											<div
 												class="flex items-center gap-3 text-xs text-text-sub-light dark:text-text-sub-dark"
 											>
-												<div class="flex items-center gap-1 text-red-500">
-													<span class="material-symbols-outlined text-[14px]"
+												<div
+													class="flex items-center gap-1"
+													:class="
+														board.isLiked ? 'text-red-500' : 'text-gray-400'
+													"
+												>
+													<span
+														class="material-symbols-outlined text-[14px]"
+														:style="{
+															'font-variation-settings': board.isLiked
+																? '\'FILL\' 1'
+																: '\'FILL\' 0',
+														}"
 														>favorite</span
 													>
 													<span>{{ board.likeCount || 0 }}</span>
@@ -129,6 +143,12 @@
 														>visibility</span
 													>
 													<span>{{ board.hit || 0 }}</span>
+												</div>
+												<div class="flex items-center gap-1">
+													<span class="material-symbols-outlined text-[14px]"
+														>chat_bubble</span
+													>
+													<span>{{ board.commentCount || 0 }}</span>
 												</div>
 											</div>
 										</div>
@@ -173,8 +193,10 @@ const categoryMap = {
 
 const categoryStyles = {
 	FREE: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-	REVIEW: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-	QUESTION: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+	REVIEW:
+		'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+	QUESTION:
+		'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
 	INFO: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
 };
 
