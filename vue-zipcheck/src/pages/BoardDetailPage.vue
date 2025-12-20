@@ -55,20 +55,23 @@
 										board.nickname &&
 										board.nickname.trim() === user.nickname.trim()
 									"
-									class="flex items-center gap-2"
+									class="flex items-center gap-1.5"
 								>
 									<button
 										@click="handleEdit"
-										class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+										class="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-primary transition-colors flex items-center justify-center text-lg"
+										aria-label="수정"
+										title="수정"
 									>
-										수정
+										<span class="material-symbols-outlined">edit</span>
 									</button>
-									<span class="text-gray-300 dark:text-gray-600">|</span>
 									<button
 										@click="handleDelete"
-										class="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
+										class="p-2 rounded-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex items-center justify-center text-lg"
+										aria-label="삭제"
+										title="삭제"
 									>
-										삭제
+										<span class="material-symbols-outlined">delete</span>
 									</button>
 								</div>
 							</div>
