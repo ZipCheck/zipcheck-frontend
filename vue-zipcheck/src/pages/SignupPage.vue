@@ -20,34 +20,6 @@
 				</p>
 			</div>
 			<form @submit.prevent="handleSignup" class="space-y-5" method="POST">
-				<!-- Profile Image Upload -->
-				<div class="flex flex-col items-center space-y-4">
-					<label
-						for="profile-image-input"
-						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-						>프로필 이미지 (선택 사항)</label
-					>
-					<div class="relative cursor-pointer" @click="triggerFileInput">
-						<img
-							:src="imagePreview"
-							alt="Profile"
-							class="w-24 h-24 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600"
-						/>
-						<div
-							class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center rounded-full opacity-0 hover:opacity-100 transition-opacity"
-						>
-							<span class="material-icons-round text-white">photo_camera</span>
-						</div>
-					</div>
-					<input
-						ref="fileInput"
-						type="file"
-						@change="handleFileChange"
-						class="hidden"
-						id="profile-image-input"
-						accept="image/*"
-					/>
-				</div>
 				<div>
 					<label
 						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
@@ -159,10 +131,12 @@
 				</div>
 				<div class="pt-2">
 					<button
-						class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-gray-900 bg-primary hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5"
+						:disabled="loading"
+						class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-gray-900 bg-primary hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 disabled:opacity-50"
 						type="submit"
 					>
-						회원가입 완료
+						<span v-if="loading">가입 처리 중...</span>
+						<span v-else>회원가입 완료</span>
 					</button>
 				</div>
 				<div class="relative mt-6">
@@ -189,38 +163,28 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { signup } from '@/api/auth.api';
-import defaultAvatar from '@/assets/images/default-avatar.svg';
 
 const router = useRouter();
 
+// Form State
 const emailUsername = ref('');
-const selectedDomain = ref('직접 입력'); // Default to direct input
+const selectedDomain = ref('직접 입력');
 const customDomain = ref('');
 const nickname = ref('');
 const password = ref('');
 const passwordConfirm = ref('');
-const profileImage = ref(null);
-const imagePreview = ref(defaultAvatar);
-const fileInput = ref(null);
+const loading = ref(false);
 
-const triggerFileInput = () => {
-	fileInput.value.click();
-};
-
-const handleFileChange = event => {
-	const file = event.target.files[0];
-	if (file) {
-		profileImage.value = file;
-		const reader = new FileReader();
-		reader.onload = e => {
-			imagePreview.value = e.target.result;
-		};
-		reader.readAsDataURL(file);
+// Computed property for the full email address
+const fullEmail = computed(() => {
+	if (selectedDomain.value === '직접 입력') {
+		return `${emailUsername.value}@${customDomain.value}`;
 	}
-};
+	return `${emailUsername.value}@${selectedDomain.value}`;
+});
 
 const handleSignup = async () => {
 	if (password.value !== passwordConfirm.value) {
@@ -228,31 +192,25 @@ const handleSignup = async () => {
 		return;
 	}
 
-	let fullEmail;
-	if (selectedDomain.value === '직접 입력') {
-		fullEmail = `${emailUsername.value}@${customDomain.value}`;
-	} else {
-		fullEmail = `${emailUsername.value}@${selectedDomain.value}`;
-	}
+	loading.value = true;
 
 	const signupData = {
-		email: fullEmail,
+		email: fullEmail.value,
 		nickname: nickname.value,
 		password: password.value,
 	};
-
-	// Only include profileImage if a new image was uploaded
-	if (imagePreview.value !== defaultAvatar) {
-		signupData.profileImage = imagePreview.value;
-	}
 
 	try {
 		await signup(signupData);
 		alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
 		router.push('/login');
 	} catch (error) {
-		console.error('Signup failed:', error);
-		alert('회원가입에 실패했습니다. 입력 정보를 확인해주세요.');
+		const errorMessage =
+			error.response?.data?.message ||
+			'회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+		alert(errorMessage);
+	} finally {
+		loading.value = false;
 	}
 };
 </script>

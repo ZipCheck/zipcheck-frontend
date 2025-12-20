@@ -107,14 +107,10 @@
 										<div class="flex items-center justify-between mt-4">
 											<div class="flex items-center gap-3">
 												<div class="flex items-center gap-2">
-													<img
-														alt="User Avatar"
-														class="w-6 h-6 rounded-full bg-gray-200"
-														src="@/assets/images/default-avatar.svg"
-													/>
+													<UserProfileAvatar :user-id="board.userId" :size="32" />
 													<span
 														class="text-xs font-medium text-gray-700 dark:text-gray-300"
-														>{{ board.nickname }}</span
+														>{{ board.nickname || '탈퇴한 사용자' }}</span
 													>
 												</div>
 											</div>
@@ -169,6 +165,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { getBoards } from '@/api/boards.api.js';
+
+import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue';
 
 const boards = ref([]);
 const loading = ref(true);

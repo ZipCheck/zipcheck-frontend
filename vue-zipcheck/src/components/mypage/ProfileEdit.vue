@@ -24,6 +24,7 @@
 							:src="profileImagePreview"
 							alt="Profile"
 							class="w-full h-full object-cover"
+							@error="handleImageError"
 						/>
 					</div>
 					<input
@@ -161,8 +162,7 @@
 </template>
 
 <script setup>
-import { inject, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { inject, ref, watch, computed, onUnmounted } from 'vue';
 import { authStore } from '@/stores/auth.store';
 import {
 	updateMyProfile,
@@ -170,38 +170,70 @@ import {
 	getMyInfo,
 	deleteMyAccount,
 } from '@/api/users.api.js';
+import { uploadProfileImage } from '@/api/files.api.js';
 import defaultAvatar from '@/assets/images/default-avatar.svg';
 
 const user = inject('user');
 const loading = ref(false);
-const router = useRouter();
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
 // Form state
 const editableNickname = ref('');
 const currentPassword = ref('');
 const newPassword = ref('');
 const newPasswordConfirm = ref('');
-const profileImagePreview = ref(null);
 const fileInput = ref(null);
+const selectedFile = ref(null); // To hold the selected File object
+const imagePreviewUrl = ref(null); // To hold the local preview URL (blob)
 
+// The source of truth for the <img> tag's src
+const profileImagePreview = computed(() => {
+	// 1. If a new file is selected, show its local preview.
+	if (imagePreviewUrl.value) {
+		return imagePreviewUrl.value;
+	}
+	// 2. If the user has a profile image URL from the server, use it.
+	if (user.value?.profileImageUrl) {
+		// Construct the full URL for the image
+		return `${apiBaseUrl}${user.value.profileImageUrl}`;
+	}
+	// 3. Fallback to the default static asset.
+	return defaultAvatar;
+});
+
+// Original state to track changes
 let originalNickname = '';
-let originalProfileImage = null;
 
-// Initialize form state when user data is available
 watch(
 	user,
 	newUser => {
 		if (newUser) {
 			editableNickname.value = newUser.nickname;
-			profileImagePreview.value = newUser.profileImage || defaultAvatar;
-
-			// Store original state to detect changes
 			originalNickname = newUser.nickname;
-			originalProfileImage = newUser.profileImage || defaultAvatar;
+			// Reset any local previews when user data changes
+			selectedFile.value = null;
+			if (imagePreviewUrl.value) {
+				URL.revokeObjectURL(imagePreviewUrl.value);
+				imagePreviewUrl.value = null;
+			}
 		}
 	},
 	{ immediate: true },
 );
+
+onUnmounted(() => {
+	// Clean up the object URL to prevent memory leaks
+	if (imagePreviewUrl.value) {
+		URL.revokeObjectURL(imagePreviewUrl.value);
+	}
+});
+
+const handleImageError = event => {
+	// If the server-provided URL fails, show the default avatar.
+	if (event.target.src !== defaultAvatar) {
+		event.target.src = defaultAvatar;
+	}
+};
 
 const triggerFileInput = () => {
 	fileInput.value.click();
@@ -209,69 +241,114 @@ const triggerFileInput = () => {
 
 const handleFileChange = event => {
 	const file = event.target.files[0];
-	if (file) {
-		const reader = new FileReader();
-		reader.onload = e => {
-			profileImagePreview.value = e.target.result;
-		};
-		reader.readAsDataURL(file);
+	if (!file) return;
+
+	if (file.size > 5 * 1024 * 1024) {
+		alert('프로필 이미지는 5MB를 초과할 수 없습니다.');
+		return;
 	}
+	// Store the file object for later upload
+	selectedFile.value = file;
+
+	// Create a temporary URL for immediate preview
+	if (imagePreviewUrl.value) {
+		URL.revokeObjectURL(imagePreviewUrl.value); // Clean up previous blob URL
+	}
+	imagePreviewUrl.value = URL.createObjectURL(file);
 };
 
 const handleProfileUpdate = async () => {
 	loading.value = true;
-	try {
-		const promises = [];
-		let profileChanged = false;
+	let newProfileImageUrl = null;
 
-		// 1. Check for profile data changes (nickname or image)
-		const newNickname = editableNickname.value;
-		const newProfileImage = profileImagePreview.value;
-
-		if (
-			newNickname !== originalNickname ||
-			newProfileImage !== originalProfileImage
-		) {
-			profileChanged = true;
-		}
-
-		if (profileChanged) {
-			const profileData = {
-				nickname: newNickname,
-				profileImage:
-					newProfileImage === defaultAvatar ? null : newProfileImage,
-			};
-			promises.push(updateMyProfile(profileData));
-		}
-
-		// 2. Check for password change
-		if (newPassword.value) {
-			if (newPassword.value !== newPasswordConfirm.value) {
-				alert('새 비밀번호가 일치하지 않습니다.');
-				loading.value = false;
-				return;
-			}
-			promises.push(updatePassword(currentPassword.value, newPassword.value));
-		}
-
-		if (promises.length === 0) {
-			alert('변경된 내용이 없습니다.');
+	// --- 1. Handle Image Upload ---
+	if (selectedFile.value) {
+		try {
+			const uploadResponse = await uploadProfileImage(selectedFile.value);
+			newProfileImageUrl = uploadResponse.profileImageUrl;
+		} catch (error) {
+			alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
+			console.error('Image upload failed:', error);
 			loading.value = false;
 			return;
 		}
+	}
 
-		await Promise.all(promises);
+	// --- 2. Handle Profile and Password Updates ---
+	const isNicknameChanged = editableNickname.value.trim() !== originalNickname;
+	const isImageChanged = newProfileImageUrl !== null;
+	const isPasswordChanged = newPassword.value !== '';
+
+	// No changes to save
+	if (!isNicknameChanged && !isImageChanged && !isPasswordChanged) {
+		alert('변경된 내용이 없습니다.');
+		loading.value = false;
+		return;
+	}
+
+	try {
+		// Update profile if nickname or image changed
+		if (isNicknameChanged || isImageChanged) {
+			const newNickname = editableNickname.value.trim();
+			if (!newNickname) {
+				alert('닉네임을 입력해주세요.');
+				loading.value = false;
+				return;
+			}
+			const profileData = {
+				nickname: newNickname,
+			};
+			if (isImageChanged) {
+				profileData.profileImageUrl = newProfileImageUrl;
+			}
+			await updateMyProfile(profileData);
+		}
+
+		// Update password if a new one is provided
+		if (isPasswordChanged) {
+			if (newPassword.value !== newPasswordConfirm.value) {
+				alert('새 비밀번호가 일치하지 않습니다.');
+				throw new Error('Passwords do not match.');
+			}
+			if (!currentPassword.value) {
+				alert('현재 비밀번호를 입력해주세요.');
+				throw new Error('Current password is required.');
+			}
+			await updatePassword(currentPassword.value, newPassword.value);
+		}
 
 		alert('프로필이 성공적으로 업데이트되었습니다.');
 
-		// Refresh global user state
+		// --- 3. Refresh UI and State ---
 		const updatedUser = await getMyInfo();
-		user.value = updatedUser;
+		user.value = updatedUser; // Update the injected user ref
 	} catch (error) {
+		const errorMessage =
+			error.response?.data?.message ||
+			error.message ||
+			'프로필 업데이트에 실패했습니다.';
+		alert(errorMessage);
+
+		// If image upload succeeded but profile update failed, the user might be left in an inconsistent state.
+		// A more robust solution could involve a state machine or a compensating transaction.
+		// For now, we alert the user.
+		if (isImageChanged) {
+			alert(
+				'참고: 이미지 업로드는 성공했으나 프로필 정보 업데이트에 실패했습니다. 페이지를 새로고침하여 현재 상태를 확인해주세요.',
+			);
+		}
 		console.error('프로필 업데이트 실패:', error);
-		// Interceptor shows alerts
 	} finally {
 		loading.value = false;
+		// Reset state after completion
+		selectedFile.value = null;
+		if (imagePreviewUrl.value) {
+			URL.revokeObjectURL(imagePreviewUrl.value);
+			imagePreviewUrl.value = null;
+		}
+		currentPassword.value = '';
+		newPassword.value = '';
+		newPasswordConfirm.value = '';
 	}
 };
 
@@ -283,11 +360,7 @@ const handleDeleteAccount = async () => {
 		try {
 			await deleteMyAccount();
 			alert('회원 탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.');
-
-			// Clear user session and state
 			authStore.clearToken();
-
-			// Force a full page reload to the home page to ensure clean state
 			window.location.href = '/';
 		} catch (error) {
 			const errorMessage =

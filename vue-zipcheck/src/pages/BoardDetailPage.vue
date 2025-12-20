@@ -31,16 +31,12 @@
 							</h1>
 							<div class="flex flex-wrap items-center justify-between gap-4">
 								<div class="flex items-center gap-3">
-									<img
-										src="@/assets/images/default-avatar.svg"
-										alt="author avatar"
-										class="w-8 h-8 rounded-full bg-gray-200"
-									/>
+									<UserProfileAvatar :user-id="board.userId" :size="24" />
 									<div>
 										<p
 											class="text-sm font-semibold text-gray-800 dark:text-gray-200"
 										>
-											{{ board.nickname }}
+											{{ board.nickname || '탈퇴한 사용자' }}
 										</p>
 										<p class="text-xs text-gray-500 dark:text-gray-400">
 											{{ new Date(board.createdAt).toLocaleString() }} &middot;
@@ -116,10 +112,7 @@
 						</h3>
 						<!-- Comment Form -->
 						<div class="flex items-start gap-4 mb-6">
-							<img
-								src="@/assets/images/default-avatar.svg"
-								class="w-10 h-10 rounded-full"
-							/>
+							<UserProfileAvatar :user-id="user?.userId" :size="24" />
 							<div class="flex-1">
 								<form @submit.prevent="handleCreateComment">
 									<textarea
@@ -153,14 +146,11 @@
 								:key="comment.commentId"
 								class="flex items-start gap-4"
 							>
-								<img
-									src="@/assets/images/default-avatar.svg"
-									class="w-10 h-10 rounded-full"
-								/>
+								<UserProfileAvatar :user-id="comment.userId" :size="24" />
 								<div class="flex-1">
 									<div class="flex justify-between items-center mb-1">
 										<span class="font-bold text-sm">{{
-											comment.nickname
+											comment.nickname || '탈퇴한 사용자'
 										}}</span>
 										<div class="flex items-center gap-2">
 											<span class="text-xs text-gray-500 dark:text-gray-400">{{
@@ -197,6 +187,7 @@ import {
 	deleteComment,
 } from '@/api/comments.api.js';
 import { user, isAuthenticated } from '@/stores/auth.store';
+import UserProfileAvatar from '@/components/common/UserProfileAvatar.vue';
 
 const route = useRoute();
 const router = useRouter();
