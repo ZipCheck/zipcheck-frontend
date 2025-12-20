@@ -31,6 +31,7 @@ export const getBoards = (order = 'latest') => {
  *   createdAt: string,
  *   updatedAt: string | null,
  *   nickname: string,
+ *   userId: number, // Added userId
  *   likeCount: number,
  *   isLiked: boolean,
  *   commentCount: number // Added for comment count
