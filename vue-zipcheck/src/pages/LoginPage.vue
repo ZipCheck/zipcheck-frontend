@@ -86,10 +86,12 @@
 					</label>
 				</div>
 				<button
-					class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-gray-900 bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform active:scale-[0.98]"
+					:disabled="loading"
+					class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-gray-900 bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform active:scale-[0.98] disabled:opacity-50"
 					type="submit"
 				>
-					로그인
+					<span v-if="loading">로그인 중...</span>
+					<span v-else>로그인</span>
 				</button>
 			</form>
 			<div class="mt-8 relative">
@@ -125,6 +127,7 @@ const router = useRouter();
 const email = ref('');
 const password = ref('');
 const rememberMe = ref(false);
+const loading = ref(false);
 
 onMounted(() => {
 	const savedEmail = localStorage.getItem('rememberedEmail');
@@ -135,6 +138,7 @@ onMounted(() => {
 });
 
 const handleLogin = async () => {
+	loading.value = true;
 	try {
 		if (rememberMe.value) {
 			localStorage.setItem('rememberedEmail', email.value);
@@ -151,9 +155,11 @@ const handleLogin = async () => {
 			router.push('/');
 		}
 	} catch (error) {
-		console.error('Login failed:', error);
-		// The interceptor will show a generic alert.
-		// Specific UI error handling can be added here if needed.
+		const errorMessage =
+			error.response?.data?.message || '이메일 또는 비밀번호가 올바르지 않습니다.';
+		alert(errorMessage);
+	} finally {
+		loading.value = false;
 	}
 };
 </script>

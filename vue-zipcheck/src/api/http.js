@@ -116,13 +116,15 @@ http.interceptors.response.use(
 
 		if (!isNetworkErrorDisabled) {
 			if (error.response) {
-				// For non-401 server errors
-				const errorMessage =
-					error.response.data?.message ||
-					'알 수 없는 서버 오류가 발생했습니다.';
-				alert(errorMessage);
+				// Only show global alert for non-login URLs
+				if (error.config.url !== '/auth/login') {
+					const errorMessage =
+						error.response.data?.message ||
+						'알 수 없는 서버 오류가 발생했습니다.';
+					alert(errorMessage);
+				}
 			} else if (error.request) {
-				// For network errors where no response was received
+				// This now correctly runs only if there was NO response
 				alert('서버에 연결할 수 없습니다. 네트워크를 확인해주세요.');
 			} else {
 				// For other errors

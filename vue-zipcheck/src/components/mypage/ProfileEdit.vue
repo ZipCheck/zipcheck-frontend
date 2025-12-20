@@ -140,16 +140,41 @@
 				</button>
 			</div>
 		</form>
+
+		<!-- Account Deletion Section -->
+		<div class="p-8 pt-4">
+			<hr class="border-gray-100 dark:border-gray-700 my-6" />
+			<h2 class="text-xl font-bold text-red-600 dark:text-red-500 mb-2">
+				회원 탈퇴
+			</h2>
+			<p class="text-gray-500 dark:text-gray-400 mb-4">
+				계정을 영구적으로 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+			</p>
+			<button
+				@click="handleDeleteAccount"
+				class="px-6 py-3 border border-red-500 text-red-500 font-bold rounded-2xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+			>
+				회원 탈퇴 진행
+			</button>
+		</div>
 	</div>
 </template>
 
 <script setup>
 import { inject, ref, watch } from 'vue';
-import { updateMyProfile, updatePassword, getMyInfo } from '@/api/users.api.js';
+import { useRouter } from 'vue-router';
+import { authStore } from '@/stores/auth.store';
+import {
+	updateMyProfile,
+	updatePassword,
+	getMyInfo,
+	deleteMyAccount,
+} from '@/api/users.api.js';
 import defaultAvatar from '@/assets/images/default-avatar.svg';
 
 const user = inject('user');
 const loading = ref(false);
+const router = useRouter();
 
 // Form state
 const editableNickname = ref('');
@@ -247,6 +272,30 @@ const handleProfileUpdate = async () => {
 		// Interceptor shows alerts
 	} finally {
 		loading.value = false;
+	}
+};
+
+const handleDeleteAccount = async () => {
+	const confirmationMessage =
+		'회원 탈퇴 시 계정은 비활성화되며, 작성한 게시글 및 활동 내역은 복구할 수 없습니다. 또한, 동일한 이메일로 다시 가입하실 수 없습니다.\n정말로 탈퇴하시겠습니까?';
+
+	if (window.confirm(confirmationMessage)) {
+		try {
+			await deleteMyAccount();
+			alert('회원 탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.');
+
+			// Clear user session and state
+			authStore.clearToken();
+
+			// Force a full page reload to the home page to ensure clean state
+			window.location.href = '/';
+		} catch (error) {
+			const errorMessage =
+				error.response?.data?.message ||
+				'알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+			alert(`탈퇴 처리 중 오류가 발생했습니다: ${errorMessage}`);
+			console.error('계정 삭제 실패:', error);
+		}
 	}
 };
 </script>
