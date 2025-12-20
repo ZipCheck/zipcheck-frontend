@@ -166,7 +166,7 @@
 												new Date(comment.createdAt).toLocaleString()
 											}}</span>
 											<button
-												v-if="user && user.userId === comment.userId"
+												v-if="user && user.nickname === comment.nickname"
 												@click="handleDeleteComment(comment.commentId)"
 												class="text-xs text-red-500 hover:underline"
 											>
