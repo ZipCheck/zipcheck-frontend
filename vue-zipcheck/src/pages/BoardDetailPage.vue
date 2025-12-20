@@ -312,8 +312,14 @@ const handleDeleteComment = async commentId => {
 };
 
 const handleEdit = () => {
-	// Check if the current user is the author of the post
-	if (user.value && user.value.userId === board.value.userId) {
+	// Check if the current user is the author of the post using nickname comparison
+	if (
+		user.value &&
+		board.value &&
+		user.value.nickname &&
+		board.value.nickname &&
+		user.value.nickname.trim() === board.value.nickname.trim()
+	) {
 		router.push(`/boards/edit/${board.value.boardId}`);
 	} else {
 		alert('게시글을 수정할 권한이 없습니다.');
@@ -325,8 +331,14 @@ const handleDelete = async () => {
 		alert('로그인이 필요합니다.');
 		return;
 	}
-	// Check if user data is loaded and if the user is the author
-	if (!user.value || user.value.userId !== board.value.userId) {
+	// Check if user data is loaded and if the user is the author using nickname comparison
+	if (
+		!user.value ||
+		!board.value ||
+		!user.value.nickname ||
+		!board.value.nickname ||
+		user.value.nickname.trim() !== board.value.nickname.trim()
+	) {
 		alert('게시글을 삭제할 권한이 없습니다.');
 		return;
 	}
