@@ -31,7 +31,10 @@
 							</h1>
 							<div class="flex flex-wrap items-center justify-between gap-4">
 								<div class="flex items-center gap-3">
-									<UserProfileAvatar :user-id="board.userId" :size="24" />
+									<UserProfileAvatar
+										:profile-image-url="board.profileImageUrl"
+										:size="24"
+									/>
 									<div>
 										<p
 											class="text-sm font-semibold text-gray-800 dark:text-gray-200"
@@ -112,7 +115,10 @@
 						</h3>
 						<!-- Comment Form -->
 						<div class="flex items-start gap-4 mb-6">
-							<UserProfileAvatar :user-id="user?.userId" :size="24" />
+							<UserProfileAvatar
+								:profile-image-url="user?.profileImageUrl"
+								:size="24"
+							/>
 							<div class="flex-1">
 								<form @submit.prevent="handleCreateComment">
 									<textarea
@@ -146,7 +152,10 @@
 								:key="comment.commentId"
 								class="flex items-start gap-4"
 							>
-								<UserProfileAvatar :user-id="comment.userId" :size="24" />
+								<UserProfileAvatar
+									:profile-image-url="comment.profileImageUrl"
+									:size="24"
+								/>
 								<div class="flex-1">
 									<div class="flex justify-between items-center mb-1">
 										<span class="font-bold text-sm">{{
@@ -157,7 +166,7 @@
 												new Date(comment.createdAt).toLocaleString()
 											}}</span>
 											<button
-												v-if="user && user.nickname === comment.nickname"
+												v-if="user && user.userId === comment.userId"
 												@click="handleDeleteComment(comment.commentId)"
 												class="text-xs text-red-500 hover:underline"
 											>
@@ -295,7 +304,7 @@ const handleDeleteComment = async commentId => {
 
 const handleEdit = () => {
 	// Check if the current user is the author of the post
-	if (user.value && user.value.nickname === board.value.nickname) {
+	if (user.value && user.value.userId === board.value.userId) {
 		router.push(`/boards/edit/${board.value.boardId}`);
 	} else {
 		alert('게시글을 수정할 권한이 없습니다.');
@@ -308,7 +317,7 @@ const handleDelete = async () => {
 		return;
 	}
 	// Check if user data is loaded and if the user is the author
-	if (!user.value || user.value.nickname !== board.value.nickname) {
+	if (!user.value || user.value.userId !== board.value.userId) {
 		alert('게시글을 삭제할 권한이 없습니다.');
 		return;
 	}
@@ -343,7 +352,8 @@ const handleShare = async () => {
 	} catch (err) {
 		console.error('공유하기 실패:', err);
 		// User might have cancelled the share dialog, or clipboard write failed
-		if (err.name !== 'AbortError') { // AbortError means user cancelled
+		if (err.name !== 'AbortError') {
+			// AbortError means user cancelled
 			alert('게시글 링크 복사에 실패했습니다.');
 		}
 	}
@@ -351,10 +361,10 @@ const handleShare = async () => {
 
 // Watch for changes in authentication status and re-fetch board details
 watch(isAuthenticated, async (newVal, oldVal) => {
-    // Only re-fetch if isAuthenticated changes from false to true
-    if (newVal && !oldVal) {
-        await fetchBoard();
-    }
+	// Only re-fetch if isAuthenticated changes from false to true
+	if (newVal && !oldVal) {
+		await fetchBoard();
+	}
 });
 
 onMounted(async () => {

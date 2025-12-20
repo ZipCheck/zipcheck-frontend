@@ -16,8 +16,7 @@ import http from './http';
  * }>}
  */
 export const getNotices = category => {
-	return http
-		.get('/notices', { params: { category } });
+	return http.get('/notices', { params: { category } });
 };
 
 /**

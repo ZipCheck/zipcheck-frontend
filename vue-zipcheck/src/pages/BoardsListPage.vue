@@ -107,7 +107,10 @@
 										<div class="flex items-center justify-between mt-4">
 											<div class="flex items-center gap-3">
 												<div class="flex items-center gap-2">
-													<UserProfileAvatar :user-id="board.userId" :size="32" />
+													<UserProfileAvatar
+														:profile-image-url="board.profileImageUrl"
+														:size="32"
+													/>
 													<span
 														class="text-xs font-medium text-gray-700 dark:text-gray-300"
 														>{{ board.nickname || '탈퇴한 사용자' }}</span

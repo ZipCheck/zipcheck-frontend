@@ -35,9 +35,7 @@
 							>
 								{{ categoryMap[post.category] || '기타' }}
 							</span>
-							<span
-								class="text-xs text-text-sub-light dark:text-text-sub-dark"
-							>
+							<span class="text-xs text-text-sub-light dark:text-text-sub-dark">
 								{{ new Date(post.createdAt).toLocaleDateString() }}
 							</span>
 						</div>
@@ -65,9 +63,7 @@
 							>
 								<div
 									class="flex items-center gap-1"
-									:class="
-										post.isLiked ? 'text-red-500' : 'text-gray-400'
-									"
+									:class="post.isLiked ? 'text-red-500' : 'text-gray-400'"
 								>
 									<span
 										class="material-symbols-outlined text-[14px]"

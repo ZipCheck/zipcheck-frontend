@@ -121,7 +121,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { login } from '@/api/auth.api';
-import { authStore, user } from '@/stores/auth.store';
+import { authStore } from '@/stores/auth.store';
 
 const router = useRouter();
 const email = ref('');
@@ -156,7 +156,8 @@ const handleLogin = async () => {
 		}
 	} catch (error) {
 		const errorMessage =
-			error.response?.data?.message || '이메일 또는 비밀번호가 올바르지 않습니다.';
+			error.response?.data?.message ||
+			'이메일 또는 비밀번호가 올바르지 않습니다.';
 		alert(errorMessage);
 	} finally {
 		loading.value = false;

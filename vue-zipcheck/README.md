@@ -1,170 +1,131 @@
-# 🖼️ 프로필 이미지 연동 가이드 (Frontend)
+# 📌 프론트엔드 수정 요청 스크립트 (게시글 수정/삭제 버튼 문제)
 
-본 문서는 **ZipCheck 프론트엔드**에서 서버 변경 사항(S3 기반 프로필 이미지 저장 방식)을 반영하기 위한
-README 용 가이드 문서입니다.
-
----
-
-## 1. 변경 개요
-
-기존 구조에서는 프로필 이미지를 다음과 같이 처리했습니다.
-
-* 서버에서 Base64 이미지 직접 반환
-* 또는 `/users/{id}/profile-image` API를 통한 이미지 조회
-
-👉 **현재 구조에서는 위 방식이 완전히 제거되었습니다.**
-
-### ✅ 현재 구조
-
-* 프로필 이미지는 **AWS S3**에 업로드됨
-* `users.profile_image_url` 컬럼에 **이미지 URL 문자열만 저장**
-* 프론트에서는 **URL을 그대로 `<img src>`에 사용**
-
-별도의 이미지 조회 API 호출은 **절대 필요하지 않습니다.**
+본 문서는 **현재 ZipCheck 백엔드 구조를 기준으로**,
+프론트엔드 UI/UX 생성 AI(Figma, Stitch AI, 웹 디자인 생성 AI 등)에 **그대로 전달하여 사용 가능한 요청 스크립트**입니다.
 
 ---
 
-## 2. 서버 응답 구조
+## 🔍 현재 상황 요약
 
-### 2.1 내 정보 조회
+* 게시글은 **로그인한 사용자가 직접 작성한 게시글**임
+* 백엔드에서는 `userId` 기준으로 **게시글 수정/삭제 권한 검증이 정상 동작**함
+* 그러나 프론트엔드에서 **수정 / 삭제 버튼이 보이지 않거나 비활성화됨**
 
-**GET `/users/me`**
+---
 
-```json
-{
-  "userId": 1,
-  "email": "test@test.com",
-  "nickname": "테스트유저",
-  "profileImageUrl": "https://zipcheck-profile.s3.ap-northeast-2.amazonaws.com/profile/1/uuid.png",
-  "alarmAgree": true,
-  "createdAt": "2025-01-01T12:00:00"
+## ❗ 문제의 핵심 원인
+
+프론트엔드에서 **게시글 작성자 여부를 잘못된 기준으로 판단하고 있음**
+
+* 게시글 상세 API 응답에는 `userId` 필드가 **존재하지 않음**
+* 현재 백엔드에서 내려주는 작성자 관련 정보:
+
+  * `nickname`
+  * `profileImageUrl`
+* 따라서 프론트에서 다음과 같은 비교 로직을 사용하고 있다면 문제 발생:
+
+```js
+board.userId === loginUserId // ❌ 항상 false
+```
+
+---
+
+## ✅ 프론트엔드 수정 요구 사항
+
+### 1️⃣ 로그인 유저 정보 관리 기준
+
+* 로그인 유저 정보는 JWT 디코딩 또는 전역 상태(store)로 관리
+* 최소 필요 정보 구조 예시:
+
+```js
+loginUser = {
+  userId,
+  nickname
 }
 ```
 
-* `profileImageUrl`은 **null 가능**
-
 ---
 
-### 2.2 게시글 목록
+### 2️⃣ 게시글 수정/삭제 버튼 노출 조건 (핵심)
 
-**GET `/boards`**
+> **게시글 작성자 닉네임과 로그인 유저 닉네임이 일치할 경우에만 버튼 노출**
 
-```json
-[
-  {
-    "boardId": 1,
-    "title": "게시글 제목",
-    "nickname": "작성자닉네임",
-    "profileImageUrl": "https://zipcheck-profile.s3.ap-northeast-2.amazonaws.com/profile/1/uuid.png",
-    "likeCount": 3,
-    "commentCount": 2,
-    "createdAt": "2025-01-01T12:00:00"
-  }
-]
+```text
+board.nickname === loginUser.nickname
 ```
 
+* `userId` 비교 방식 ❌
+* `nickname` 비교 방식 ⭕
+
 ---
 
-### 2.3 게시글 상세
+### 3️⃣ UI 동작 요구 사항
 
-**GET `/boards/{boardId}`**
+* 게시글 상세 페이지에서 다음 조건을 모두 만족할 경우에만 버튼 노출:
+
+  * 로그인 상태일 것
+  * 게시글 작성자일 것
+
+* 타인의 게시글일 경우:
+
+  * 수정 / 삭제 버튼 미노출
+  * 또는 disabled 상태로 처리
+
+---
+
+### 4️⃣ 버튼 클릭 시 API 연동 규칙
+
+#### 🔹 게시글 수정
+
+```http
+PUT /boards/{boardId}
+```
+
+#### 🔹 게시글 삭제
+
+```http
+DELETE /boards/{boardId}
+```
+
+* 요청 시 Access Token은 Authorization Header에 포함
+* `userId`는 요청 바디나 파라미터로 전달하지 않음
+
+  * (백엔드에서 인증 정보로 자동 판별)
+
+---
+
+## 🧩 게시글 상세 API 응답 예시
 
 ```json
 {
   "boardId": 1,
   "title": "게시글 제목",
-  "content": "내용",
+  "category": "FREE",
+  "content": "게시글 내용",
   "nickname": "작성자닉네임",
-  "profileImageUrl": "https://zipcheck-profile.s3.ap-northeast-2.amazonaws.com/profile/1/uuid.png",
+  "profileImageUrl": "https://...",
   "likeCount": 3,
-  "isLiked": true
+  "isLiked": true,
+  "createdAt": "2024-12-20T10:00:00"
 }
 ```
 
 ---
 
-### 2.4 댓글 목록
+## 🎯 최종 목표
 
-**GET `/comments/board/{boardId}`**
-
-```json
-[
-  {
-    "commentId": 1,
-    "content": "댓글 내용",
-    "nickname": "댓글작성자",
-    "profileImageUrl": "https://zipcheck-profile.s3.ap-northeast-2.amazonaws.com/profile/2/uuid.png",
-    "createdAt": "2025-01-01 12:10"
-  }
-]
-```
+* 내가 작성한 게시글에서는 **반드시 수정 / 삭제 버튼이 노출**되어야 함
+* 권한 판단은 **닉네임 비교 기준**으로 처리
+* **백엔드 로직 변경 없이 프론트엔드 로직만 수정**
 
 ---
 
-## 3. 프론트엔드 구현 규칙
+## ➕ 추가 UI 요청 사항 (선택)
 
-### 3.1 기본 원칙
-
-* `profileImageUrl`이 **존재하면 그대로 사용**
-* `null / undefined / 빈 문자열`이면 **기본 이미지 사용**
-
----
-
-### 3.2 Vue 예시 코드
-
-```vue
-<img
-  :src="user.profileImageUrl || '/images/default-profile.png'"
-  class="profile-img"
-  alt="profile"
-/>
-```
+* 수정 / 삭제 버튼은 게시글 상단 우측에 아이콘 형태로 배치
+* 모바일 / 데스크톱 반응형 UI 고려
+* 삭제 버튼 클릭 시 confirm 모달 표시
 
 ---
 
-### 3.3 게시글 리스트 예시
-
-```vue
-<div v-for="board in boards" :key="board.boardId" class="board-item">
-  <img
-    :src="board.profileImageUrl || '/images/default-profile.png'"
-    class="profile-img-sm"
-  />
-  <span>{{ board.nickname }}</span>
-</div>
-```
-
----
-
-### 3.4 댓글 예시
-
-```vue
-<div v-for="comment in comments" :key="comment.commentId">
-  <img
-    :src="comment.profileImageUrl || '/images/default-profile.png'"
-    class="profile-img-xs"
-  />
-  <span>{{ comment.nickname }}</span>
-  <p>{{ comment.content }}</p>
-</div>
-```
-
----
-
-## 4. ⚠️ 주의사항
-
-* ❌ `/users/{id}/profile-image` API 사용 금지
-* ❌ Base64 이미지 처리 금지
-* ❌ Blob → URL 변환 로직 사용 금지
-
-이미지는 **항상 S3 URL 기반 렌더링**입니다.
-
----
-
-## 5. 요약
-
-* 서버는 **URL만 제공**
-* 프론트는 **URL 그대로 렌더링**
-* 이미지 로딩 실패 시 기본 이미지 fallback 처리
-
-이 문서를 기준으로 프론트 전반(마이페이지 / 게시판 / 댓글)을 수정하면 됩니다.
+본 스크립트는 **프론트엔드 UI 생성 AI에 그대로 전달하여 사용 가능**합니다.

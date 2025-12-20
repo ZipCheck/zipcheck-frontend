@@ -1,7 +1,7 @@
 import http from './http';
 
 /**
- * @returns {Promise<{userId: number, email: string, nickname: string, profileImage: string, alarmAgree: boolean, createdAt: string}>}
+ * @returns {Promise<{userId: number, email: string, nickname: string, profileImageUrl: string, alarmAgree: boolean, createdAt: string}>}
  */
 export const getMyInfo = () => {
 	return http.get('/users/me').then(response => response.data);
