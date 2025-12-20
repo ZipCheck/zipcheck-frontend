@@ -1,106 +1,148 @@
-# 📌 프론트엔드 수정 요청 스크립트 (댓글 삭제 버튼 문제)
+# 📌 프론트엔드 수정 요청 스크립트
 
-본 문서는 **ZipCheck 댓글 백엔드 구조를 기준으로**,
-프론트엔드 UI/UX 생성 AI(Figma, Stitch AI, 웹 디자인 생성 AI 등)에 **그대로 전달하여 사용 가능한 요청 스크립트**입니다.
+## (게시글 수정 / 삭제 버튼 미노출 문제)
+
+본 문서는 **ZipCheck 프로젝트 백엔드 구조를 기준으로**,
+프론트엔드 UI/UX 생성 AI 또는 프론트엔드 개발 AI에게 **그대로 전달하여 사용 가능한 요청 스크립트**입니다.
 
 ---
 
 ## 🔍 현재 상황 요약
 
-* 댓글은 **로그인한 사용자가 직접 작성한 댓글**임
-* 백엔드에서는 `userId` 기준으로 **댓글 삭제 권한 검증이 정상 동작**함
-* 그러나 프론트엔드에서 **댓글 삭제 버튼이 보이지 않거나 클릭이 불가능함**
+* 로그인 성공 시 서버는 다음 정보를 반환함:
+
+  * `userId`
+  * `nickname`
+  * `role`
+  * `accessToken`
+
+* 게시글 상세 조회 API에서는 다음 정보를 반환함:
+
+  * `nickname` (게시글 작성자 닉네임)
+  * `profileImageUrl`
+  * `likeCount`, `isLiked`
+
+* 백엔드에서는 `userId` 기준으로 게시글 수정/삭제 권한 검증이 정상 동작함
+
+* 하지만 프론트엔드에서는 **내가 작성한 게시글임에도 수정 / 삭제 버튼이 노출되지 않음**
 
 ---
 
 ## ❗ 문제의 핵심 원인
 
-프론트엔드에서 **댓글 작성자 여부 판단 기준이 올바르지 않음**
+프론트엔드에서 **게시글 작성자 여부를 판단하는 조건이 올바르게 동작하지 않음**
 
-* 댓글 목록 API 응답(`CommentResponse`)에는 `userId` 필드가 포함되어 있지 않음
-* 백엔드에서 내려주는 댓글 작성자 관련 정보:
+* 게시글 상세 API 응답에는 `userId` 필드가 없음
+* 프론트엔드는 반드시 다음 기준으로 권한 판단을 수행해야 함:
 
-  * `nickname`
-  * `profileImageUrl`
-  * `createdAt`
-* 따라서 프론트엔드에서 다음과 같은 비교를 수행할 경우 문제 발생:
+```text
+게시글.nickname === 로그인유저.nickname
+```
+
+* 다음과 같은 비교는 항상 실패함:
 
 ```js
-comment.userId === loginUserId // ❌ 항상 false
+board.userId === loginUser.userId // ❌ (board에 userId 없음)
 ```
 
 ---
 
-## ✅ 프론트엔드 수정 요구 사항
+## ✅ 프론트엔드 수정 요청 사항 (필수)
 
-### 1️⃣ 로그인 유저 정보 관리 기준
+### 1️⃣ 로그인 유저 정보 관리 방식
 
-* 로그인 유저 정보는 JWT 디코딩 또는 전역 상태(store)에서 관리
-* 최소 필요 정보 구조 예시:
+* 로그인 성공 시 반환된 응답(`LoginResponse`)을 전역 상태 또는 localStorage에 저장
 
 ```js
 loginUser = {
   userId,
-  nickname
+  nickname,
+  role,
+  profileImageUrl
 }
 ```
 
+* 게시글 상세 페이지 렌더링 시 반드시 해당 정보를 사용
+
 ---
 
-### 2️⃣ 댓글 삭제 버튼 노출 조건 (핵심)
+### 2️⃣ 수정 / 삭제 버튼 노출 조건 (핵심)
 
-> **댓글 작성자 닉네임과 로그인 유저 닉네임이 일치할 경우에만 삭제 버튼 노출**
+> **로그인 상태이며, 게시글 작성자 닉네임과 로그인 유저 닉네임이 일치할 경우에만 버튼 노출**
 
-```text
-comment.nickname === loginUser.nickname
+```js
+board.nickname?.trim() === loginUser.nickname?.trim()
 ```
 
-* `userId` 비교 방식 ❌
-* `nickname` 비교 방식 ⭕
+* 문자열 비교 전 `trim()` 필수 적용
+* 로그인 정보가 아직 로드되지 않은 초기 렌더링 상태를 고려할 것
 
 ---
 
-### 3️⃣ UI 동작 요구 사항
+### 3️⃣ 안전한 조건부 렌더링 예시
 
-* 각 댓글 우측에 **삭제 아이콘(🗑️ 또는 X)** 배치
+#### 🔹 Vue 기준
 
-* 다음 조건을 모두 만족할 경우에만 버튼 노출:
+```vue
+<button
+  v-if="loginUser && loginUser.nickname && board.nickname && board.nickname.trim() === loginUser.nickname.trim()"
+>
+  수정
+</button>
 
-  * 로그인 상태일 것
-  * 댓글 작성자일 것
+<button
+  v-if="loginUser && loginUser.nickname && board.nickname && board.nickname.trim() === loginUser.nickname.trim()"
+>
+  삭제
+</button>
+```
 
-* 타인의 댓글일 경우:
+#### 🔹 React 기준
 
-  * 삭제 버튼 미노출
-  * 또는 disabled 상태 처리
+```jsx
+{loginUser?.nickname?.trim() === board?.nickname?.trim() && (
+  <>
+    <button>수정</button>
+    <button>삭제</button>
+  </>
+)}
+```
 
 ---
 
-### 4️⃣ 삭제 버튼 클릭 시 API 연동 규칙
+### 4️⃣ 버튼 클릭 시 API 연동 규칙
 
-#### 🔹 댓글 삭제 API
+* 게시글 수정:
 
 ```http
-DELETE /comments/{commentId}
+PUT /boards/{boardId}
+```
+
+* 게시글 삭제:
+
+```http
+DELETE /boards/{boardId}
 ```
 
 * Access Token은 Authorization Header에 포함
-* 요청 바디 없음
-* `userId`를 별도로 전달하지 않음
+* `userId`는 요청 파라미터나 바디로 전달하지 않음
 
-  * (백엔드에서 인증 객체로 자동 판별)
+  * (백엔드에서 인증 객체 기반으로 자동 판별)
 
 ---
 
-## 🧩 댓글 목록 API 응답 예시
+## 🧩 게시글 상세 API 응답 예시
 
 ```json
 {
-  "commentId": 10,
-  "content": "댓글 내용입니다",
+  "boardId": 1,
+  "title": "게시글 제목",
+  "category": "FREE",
+  "content": "게시글 내용",
   "nickname": "작성자닉네임",
   "profileImageUrl": "https://...",
-  "createdAt": "2024-12-20 14:30"
+  "likeCount": 3,
+  "isLiked": true
 }
 ```
 
@@ -108,18 +150,18 @@ DELETE /comments/{commentId}
 
 ## 🎯 최종 목표
 
-* 내가 작성한 댓글에는 **반드시 삭제 버튼이 노출**되어야 함
-* 권한 판단은 **닉네임 비교 기준**으로 처리
+* 내가 작성한 게시글에서는 **항상 수정 / 삭제 버튼이 노출**되어야 함
+* 권한 판단은 **닉네임 비교 기준으로 처리**
 * **백엔드 로직 변경 없이 프론트엔드 로직만 수정**
 
 ---
 
-## ➕ 추가 UI 요청 사항 (선택)
+## ➕ 추가 권장 사항 (선택)
 
-* 삭제 버튼 클릭 시 confirm 모달 표시
-* 삭제 성공 시 댓글 리스트 즉시 갱신 (프론트 상태 갱신)
-* 모바일 환경에서도 터치 가능한 버튼 크기 고려
+* 버튼은 게시글 상단 우측에 아이콘 형태로 배치
+* 삭제 시 confirm 모달 표시
+* 모바일 / 데스크톱 반응형 고려
 
 ---
 
-본 스크립트는 **프론트엔드 UI 생성 AI에 그대로 전달하여 사용 가능**합니다.
+본 스크립트는 **프론트엔드 수정 및 UI 생성 AI에 그대로 전달하여 사용 가능**합니다.

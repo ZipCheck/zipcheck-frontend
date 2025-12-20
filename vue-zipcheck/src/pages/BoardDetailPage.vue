@@ -48,7 +48,13 @@
 									</div>
 								</div>
 								<div
-									v-if="user && board && user.userId === board.userId"
+									v-if="
+										user &&
+										user.nickname &&
+										board &&
+										board.nickname &&
+										board.nickname.trim() === user.nickname.trim()
+									"
 									class="flex items-center gap-2"
 								>
 									<button
