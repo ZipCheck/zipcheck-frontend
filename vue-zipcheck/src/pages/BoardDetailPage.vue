@@ -48,13 +48,7 @@
 									</div>
 								</div>
 								<div
-									v-if="
-										user &&
-										user.nickname &&
-										board &&
-										board.nickname &&
-										board.nickname.trim() === user.nickname.trim()
-									"
+									v-if="isAuthor"
 									class="flex items-center gap-1.5"
 								>
 									<button
@@ -180,9 +174,11 @@
 											<button
 												v-if="user && user.nickname === comment.nickname"
 												@click="handleDeleteComment(comment.commentId)"
-												class="text-xs text-red-500 hover:underline"
+												class="p-1 rounded-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex items-center justify-center text-base"
+												aria-label="댓글 삭제"
+												title="댓글 삭제"
 											>
-												삭제
+												<span class="material-symbols-outlined">delete</span>
 											</button>
 										</div>
 									</div>
@@ -199,7 +195,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getBoardById, likeBoard, deleteBoard } from '@/api/boards.api.js';
 import {
@@ -218,6 +214,13 @@ const loading = ref(true);
 const error = ref(null);
 const comments = ref([]);
 const newComment = ref('');
+
+const isAuthor = computed(() => {
+    if (!user.value || !user.value.nickname || !board.value || !board.value.nickname) {
+        return false;
+    }
+    return user.value.nickname.trim() === board.value.nickname.trim();
+});
 
 const categoryMap = {
 	FREE: '자유게시판',
