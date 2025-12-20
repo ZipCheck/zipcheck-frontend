@@ -47,7 +47,10 @@
 										</p>
 									</div>
 								</div>
-								<div class="flex items-center gap-2">
+								<div
+									v-if="user && board && user.userId === board.userId"
+									class="flex items-center gap-2"
+								>
 									<button
 										@click="handleEdit"
 										class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
