@@ -3,9 +3,6 @@ import { authStore, user } from '@/stores/auth.store';
 
 const http = axios.create({
 	baseURL: import.meta.env.VITE_API_BASE_URL,
-	headers: {
-		'Content-Type': 'application/json',
-	},
 	withCredentials: true, // For HttpOnly cookies
 });
 

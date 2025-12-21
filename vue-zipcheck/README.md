@@ -1,167 +1,153 @@
-# 📌 프론트엔드 수정 요청 스크립트
+# 프로필 이미지 삭제 기능 DB 미반영 이슈 수정 요청
 
-## (게시글 수정 / 삭제 버튼 미노출 문제)
-
-본 문서는 **ZipCheck 프로젝트 백엔드 구조를 기준으로**,
-프론트엔드 UI/UX 생성 AI 또는 프론트엔드 개발 AI에게 **그대로 전달하여 사용 가능한 요청 스크립트**입니다.
+본 문서는 **ZipCheck 마이페이지 – 프로필 이미지 삭제 시 DB에 URL이 남아있는 문제**를 해결하기 위한 프론트엔드 수정 요청서입니다.
+백엔드 로직은 이미 수정 완료되었으며, 현재 문제의 원인은 **프론트엔드 삭제 요청 방식**에 있습니다.
 
 ---
 
-## 🔍 현재 상황 요약
+## 1. 현재 문제 상황 (확정된 증상)
 
-* 로그인 성공 시 서버는 다음 정보를 반환함:
+* 마이페이지에서 "프로필 이미지 삭제" 버튼 클릭 시
 
-  * `userId`
-  * `nickname`
-  * `role`
-  * `accessToken`
+  * 화면에서는 기본 이미지로 바뀌는 것처럼 보임
+  * 하지만 DB(`users.profile_image_url`)에는 기존 S3 URL이 그대로 남아 있음
 
-* 게시글 상세 조회 API에서는 다음 정보를 반환함:
+실제 DB 값 예시:
 
-  * `nickname` (게시글 작성자 닉네임)
-  * `profileImageUrl`
-  * `likeCount`, `isLiked`
-
-* 백엔드에서는 `userId` 기준으로 게시글 수정/삭제 권한 검증이 정상 동작함
-
-* 하지만 프론트엔드에서는 **내가 작성한 게시글임에도 수정 / 삭제 버튼이 노출되지 않음**
-
----
-
-## ❗ 문제의 핵심 원인
-
-프론트엔드에서 **게시글 작성자 여부를 판단하는 조건이 올바르게 동작하지 않음**
-
-* 게시글 상세 API 응답에는 `userId` 필드가 없음
-* 프론트엔드는 반드시 다음 기준으로 권한 판단을 수행해야 함:
-
-```text
-게시글.nickname === 로그인유저.nickname
+```
+https://zipcheck-profile.s3.ap-northeast-2.amazonaws.com/profile/1/7c706e4e-9eb5-47fb-acd6-42ff3cf1b561.png
 ```
 
-* 다음과 같은 비교는 항상 실패함:
+이는 다음 SQL이 **실행되지 않았다는 의미**입니다.
 
-```js
-board.userId === loginUser.userId // ❌ (board에 userId 없음)
+```sql
+UPDATE users
+SET profile_image_url = NULL
+WHERE user_id = ?;
 ```
 
 ---
 
-## ✅ 프론트엔드 수정 요청 사항 (필수)
+## 2. 백엔드 삭제 API 정보 (이미 구현 완료)
 
-### 1️⃣ 로그인 유저 정보 관리 방식
+### 프로필 이미지 업로드 / 삭제 API
 
-* 로그인 성공 시 반환된 응답(`LoginResponse`)을 전역 상태 또는 localStorage에 저장
+* Method: PATCH
+* URL: `/users/me/profile-image`
+* Content-Type: multipart/form-data
+* 인증: Authorization: Bearer {accessToken} 필수
 
-```js
-loginUser = {
-  userId,
-  nickname,
-  role,
-  profileImageUrl
-}
-```
+동작 규칙:
 
-* 게시글 상세 페이지 렌더링 시 반드시 해당 정보를 사용
+* `image` 파트가 있으면 → 업로드
+* `image` 파트가 없으면 → **삭제**
 
----
-
-### 2️⃣ 수정 / 삭제 버튼 노출 조건 (핵심)
-
-> **로그인 상태이며, 게시글 작성자 닉네임과 로그인 유저 닉네임이 일치할 경우에만 버튼 노출**
-
-```js
-board.nickname?.trim() === loginUser.nickname?.trim()
-```
-
-* 문자열 비교 전 `trim()` 필수 적용
-* 로그인 정보가 아직 로드되지 않은 초기 렌더링 상태를 고려할 것
-
----
-
-### 3️⃣ 안전한 조건부 렌더링 예시
-
-#### 🔹 Vue 기준
-
-```vue
-<button
-  v-if="loginUser && loginUser.nickname && board.nickname && board.nickname.trim() === loginUser.nickname.trim()"
->
-  수정
-</button>
-
-<button
-  v-if="loginUser && loginUser.nickname && board.nickname && board.nickname.trim() === loginUser.nickname.trim()"
->
-  삭제
-</button>
-```
-
-#### 🔹 React 기준
-
-```jsx
-{loginUser?.nickname?.trim() === board?.nickname?.trim() && (
-  <>
-    <button>수정</button>
-    <button>삭제</button>
-  </>
-)}
-```
-
----
-
-### 4️⃣ 버튼 클릭 시 API 연동 규칙
-
-* 게시글 수정:
-
-```http
-PUT /boards/{boardId}
-```
-
-* 게시글 삭제:
-
-```http
-DELETE /boards/{boardId}
-```
-
-* Access Token은 Authorization Header에 포함
-* `userId`는 요청 파라미터나 바디로 전달하지 않음
-
-  * (백엔드에서 인증 객체 기반으로 자동 판별)
-
----
-
-## 🧩 게시글 상세 API 응답 예시
-
-```json
-{
-  "boardId": 1,
-  "title": "게시글 제목",
-  "category": "FREE",
-  "content": "게시글 내용",
-  "nickname": "작성자닉네임",
-  "profileImageUrl": "https://...",
-  "likeCount": 3,
-  "isLiked": true
+```java
+@PatchMapping(
+    value = "/me/profile-image",
+    consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+)
+public ResponseEntity<ApiResponse<?>> updateProfileImage(
+        @RequestPart(value = "image", required = false) MultipartFile image
+) {
+    // image == null → 삭제 처리
 }
 ```
 
 ---
 
-## 🎯 최종 목표
+## 3. 문제 원인 (확정)
 
-* 내가 작성한 게시글에서는 **항상 수정 / 삭제 버튼이 노출**되어야 함
-* 권한 판단은 **닉네임 비교 기준으로 처리**
-* **백엔드 로직 변경 없이 프론트엔드 로직만 수정**
+현재 프론트엔드에서 삭제 버튼 클릭 시 다음 중 하나의 잘못된 요청을 보내고 있습니다.
 
----
+* `/users/me` (닉네임 수정 API) 호출
+* `/users/me/profile-image` 호출 시 body 없이 PATCH 요청
+* JSON 요청(`application/json`)으로 호출
 
-## ➕ 추가 권장 사항 (선택)
-
-* 버튼은 게시글 상단 우측에 아이콘 형태로 배치
-* 삭제 시 confirm 모달 표시
-* 모바일 / 데스크톱 반응형 고려
+위 방식들은 모두 **컨트롤러가 매핑되지 않거나 삭제 로직이 실행되지 않습니다.**
 
 ---
 
-본 스크립트는 **프론트엔드 수정 및 UI 생성 AI에 그대로 전달하여 사용 가능**합니다.
+## 4. 반드시 구현해야 할 삭제 요청 방식 (정답)
+
+### 프론트엔드 삭제 버튼 로직
+
+```js
+const deleteProfileImage = async () => {
+  const formData = new FormData()
+
+  await api.patch(
+    '/users/me/profile-image',
+    formData
+  )
+
+  // 서버 반영 후 상태 갱신
+  profileImageUrl.value = null
+}
+```
+
+필수 조건:
+
+* 반드시 `FormData` 객체를 전송할 것
+* `image` 필드는 추가하지 않음
+* Content-Type을 수동으로 지정하지 말 것
+* 공통 axios 인스턴스(api)를 사용할 것
+
+---
+
+## 5. UI 렌더링 필수 조건
+
+프로필 이미지 렌더링 시, 기본 이미지 fallback 처리를 반드시 적용해야 합니다.
+
+```html
+<img
+  :src="profileImageUrl || '/default-profile.png'"
+  alt="프로필 이미지"
+/>
+```
+
+삭제 후 `profileImageUrl`이 `null`일 경우에도 기존 이미지가 남지 않도록 해야 합니다.
+
+---
+
+## 6. 확인 방법 (필수)
+
+수정 후 아래 사항을 반드시 확인해야 합니다.
+
+1. Network 탭
+
+   * Request URL: `PATCH /users/me/profile-image`
+   * Request Headers에 `Content-Type: multipart/form-data; boundary=...`
+   * Authorization 헤더 포함 여부 확인
+
+2. 서버 로그
+
+   * 프로필 이미지 삭제 API 컨트롤러 진입 로그 확인
+
+3. DB 확인
+
+   ```sql
+   SELECT profile_image_url FROM users WHERE user_id = ?;
+   ```
+
+   * 결과가 `NULL`이면 정상
+
+---
+
+## 7. 금지 사항
+
+* body 없는 PATCH 요청
+* JSON 요청으로 프로필 이미지 삭제 시도
+* `/users/me` API로 사진 삭제 처리
+* UI 상태만 변경하고 서버 요청을 생략하는 방식
+
+---
+
+## 8. 목표 결과
+
+* 삭제 버튼 클릭 시 서버의 삭제 로직이 실제로 실행됨
+* DB의 `profile_image_url` 컬럼이 `NULL`로 변경됨
+* 화면과 DB 상태가 일치
+
+본 문서를 기준으로 **프로필 이미지 삭제 로직을 수정해 주세요.**
+UI 디자인은 유지하고, **요청 방식 및 상태 갱신 로직만 수정**하면 됩니다.

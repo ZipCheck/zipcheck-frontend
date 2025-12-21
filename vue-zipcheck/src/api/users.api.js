@@ -8,10 +8,17 @@ export const getMyInfo = () => {
 };
 
 /**
- * @param {{nickname: string, profileImage: string}} profileData
+ * @param {FormData} formData
  */
-export const updateMyProfile = profileData => {
-	return http.patch('/users/me', profileData);
+export const updateMyProfileImage = formData => {
+	return http.patch('/users/me/profile-image', formData);
+};
+
+/**
+ * @param {string} nickname
+ */
+export const updateMyNickname = nickname => {
+	return http.patch('/users/me', { nickname });
 };
 
 /**

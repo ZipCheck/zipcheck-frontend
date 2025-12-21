@@ -1,6 +1,6 @@
 <template>
 	<div
-		v-if="user"
+		v-if="isDataLoaded"
 		class="bg-surface-light dark:bg-surface-dark rounded-3xl shadow-soft border border-border-light dark:border-border-dark overflow-hidden"
 	>
 		<div class="p-8 pb-0">
@@ -46,12 +46,21 @@
 					<p class="text-sm text-gray-500 mb-4 dark:text-gray-400">
 						png, jpg 파일만 업로드 가능합니다. (최대 5MB)
 					</p>
-					<button
-						@click.prevent="triggerFileInput"
-						class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
-					>
-						사진 변경
-					</button>
+					<div class="flex items-center gap-2">
+						<button
+							@click.prevent="triggerFileInput"
+							class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+						>
+							사진 변경
+						</button>
+						<button
+							v-if="profileImageUrl"
+							@click.prevent="handleRemoveProfileImage"
+							class="px-4 py-2 border border-red-500 text-red-500 rounded-lg text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+						>
+							사진 삭제
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -67,7 +76,7 @@
 						<span class="material-symbols-outlined text-gray-400">person</span>
 					</div>
 					<input
-						v-model="editableNickname"
+						v-model="nickname"
 						class="block w-full pl-12 pr-4 py-3.5 bg-white dark:bg-input-bg-dark border border-gray-200 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
 						placeholder="닉네임을 입력해주세요"
 						type="text"
@@ -114,7 +123,7 @@
 							>새 비밀번호 확인</label
 						>
 						<input
-							v-model="newPasswordConfirm"
+							v-model="confirmPassword"
 							class="block w-full pl-4 pr-4 py-3.5 bg-white dark:bg-input-bg-dark border border-gray-200 dark:border-gray-600 rounded-2xl"
 							placeholder="비밀번호 재입력"
 							type="password"
@@ -132,11 +141,11 @@
 					취소
 				</button>
 				<button
-					:disabled="loading"
+					:disabled="isSaving"
 					class="px-8 py-3.5 bg-primary text-gray-900 font-bold rounded-2xl hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
 					type="submit"
 				>
-					<span v-if="loading">저장 중...</span>
+					<span v-if="isSaving">저장 중...</span>
 					<span v-else>변경사항 저장</span>
 				</button>
 			</div>
@@ -159,87 +168,72 @@
 			</button>
 		</div>
 	</div>
+	<div v-else class="text-center p-10">
+		<p>사용자 정보를 불러오는 중입니다...</p>
+	</div>
 </template>
 
 <script setup>
-import { inject, ref, watch, computed, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { authStore } from '@/stores/auth.store';
 import {
-	updateMyProfile,
-	updatePassword,
 	getMyInfo,
+	updateMyNickname,
+	updatePassword,
+	updateMyProfileImage,
 	deleteMyAccount,
 } from '@/api/users.api.js';
-import { uploadProfileImage } from '@/api/files.api.js';
 import defaultAvatar from '@/assets/images/default-avatar.svg';
 
-const user = inject('user');
-const loading = ref(false);
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const isDataLoaded = ref(false);
+const isSaving = ref(false);
+const isUploading = ref(false);
 
 // Form state
-const editableNickname = ref('');
+const nickname = ref('');
+const originalNickname = ref('');
+const profileImageUrl = ref('');
+const profileImageFile = ref(null);
+
 const currentPassword = ref('');
 const newPassword = ref('');
-const newPasswordConfirm = ref('');
-const fileInput = ref(null);
-const selectedFile = ref(null); // To hold the selected File object
-const imagePreviewUrl = ref(null); // To hold the local preview URL (blob)
+const confirmPassword = ref('');
 
-// The source of truth for the <img> tag's src
+const fileInput = ref(null);
+
 const profileImagePreview = computed(() => {
-	// 1. If a new file is selected, show its local preview.
-	if (imagePreviewUrl.value) {
-		return imagePreviewUrl.value;
+	if (profileImageUrl.value) {
+		return profileImageUrl.value;
 	}
-	// 2. If the user has a profile image URL from the server, use it.
-	if (user.value?.profileImageUrl) {
-		// Construct the full URL for the image
-		return `${apiBaseUrl}${user.value.profileImageUrl}`;
-	}
-	// 3. Fallback to the default static asset.
 	return defaultAvatar;
 });
 
-// Original state to track changes
-let originalNickname = '';
-
-watch(
-	user,
-	newUser => {
-		if (newUser) {
-			editableNickname.value = newUser.nickname;
-			originalNickname = newUser.nickname;
-			// Reset any local previews when user data changes
-			selectedFile.value = null;
-			if (imagePreviewUrl.value) {
-				URL.revokeObjectURL(imagePreviewUrl.value);
-				imagePreviewUrl.value = null;
-			}
-		}
-	},
-	{ immediate: true },
-);
-
-onUnmounted(() => {
-	// Clean up the object URL to prevent memory leaks
-	if (imagePreviewUrl.value) {
-		URL.revokeObjectURL(imagePreviewUrl.value);
+onMounted(async () => {
+	try {
+		const userInfo = await getMyInfo();
+		nickname.value = userInfo.nickname;
+		originalNickname.value = userInfo.nickname;
+		profileImageUrl.value = userInfo.profileImageUrl;
+	} catch (error) {
+		console.error('Failed to fetch user info:', error);
+		alert('사용자 정보를 불러오는 데 실패했습니다.');
+	} finally {
+		isDataLoaded.value = true;
 	}
 });
 
 const handleImageError = event => {
-	// If the server-provided URL fails, show the default avatar.
 	if (event.target.src !== defaultAvatar) {
 		event.target.src = defaultAvatar;
 	}
 };
 
 const triggerFileInput = () => {
+	if (isUploading.value) return;
 	fileInput.value.click();
 };
 
-const handleFileChange = event => {
+const handleFileChange = async event => {
 	const file = event.target.files[0];
 	if (!file) return;
 
@@ -247,108 +241,99 @@ const handleFileChange = event => {
 		alert('프로필 이미지는 5MB를 초과할 수 없습니다.');
 		return;
 	}
-	// Store the file object for later upload
-	selectedFile.value = file;
 
-	// Create a temporary URL for immediate preview
-	if (imagePreviewUrl.value) {
-		URL.revokeObjectURL(imagePreviewUrl.value); // Clean up previous blob URL
+	profileImageFile.value = file;
+	const formData = new FormData();
+	formData.append('image', file);
+
+	isUploading.value = true;
+	try {
+		const response = await updateMyProfileImage(formData);
+		profileImageUrl.value = response.data;
+		alert('프로필 이미지가 성공적으로 변경되었습니다.');
+	} catch (error) {
+		console.error('Image upload failed:', error);
+		alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
+	} finally {
+		isUploading.value = false;
 	}
-	imagePreviewUrl.value = URL.createObjectURL(file);
+};
+
+const handleRemoveProfileImage = async () => {
+	if (!window.confirm('프로필 사진을 정말로 삭제하시겠습니까?')) {
+		return;
+	}
+	try {
+		const formData = new FormData();
+		await updateMyProfileImage(formData);
+		profileImageUrl.value = null;
+		alert('프로필 사진이 삭제되었습니다.');
+	} catch (error) {
+		console.error('Failed to remove profile image:', error);
+		alert('프로필 사진 삭제에 실패했습니다.');
+	}
 };
 
 const handleProfileUpdate = async () => {
-	loading.value = true;
-	let newProfileImageUrl = null;
+	const isNicknameChanged = nickname.value !== originalNickname.value;
+	const isPasswordEntered =
+		currentPassword.value && newPassword.value && confirmPassword.value;
 
-	// --- 1. Handle Image Upload ---
-	if (selectedFile.value) {
-		try {
-			const uploadResponse = await uploadProfileImage(selectedFile.value);
-			newProfileImageUrl = uploadResponse.profileImageUrl;
-		} catch (error) {
-			alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
-			console.error('Image upload failed:', error);
-			loading.value = false;
-			return;
-		}
-	}
-
-	// --- 2. Handle Profile and Password Updates ---
-	const isNicknameChanged = editableNickname.value.trim() !== originalNickname;
-	const isImageChanged = newProfileImageUrl !== null;
-	const isPasswordChanged = newPassword.value !== '';
-
-	// No changes to save
-	if (!isNicknameChanged && !isImageChanged && !isPasswordChanged) {
+	if (!isNicknameChanged && !isPasswordEntered) {
 		alert('변경된 내용이 없습니다.');
-		loading.value = false;
 		return;
 	}
 
-	try {
-		// Update profile if nickname or image changed
-		if (isNicknameChanged || isImageChanged) {
-			const newNickname = editableNickname.value.trim();
-			if (!newNickname) {
-				alert('닉네임을 입력해주세요.');
-				loading.value = false;
-				return;
-			}
-			const profileData = {
-				nickname: newNickname,
-			};
-			if (isImageChanged) {
-				profileData.profileImageUrl = newProfileImageUrl;
-			}
-			await updateMyProfile(profileData);
-		}
+	isSaving.value = true;
+	const tasks = [];
 
-		// Update password if a new one is provided
-		if (isPasswordChanged) {
-			if (newPassword.value !== newPasswordConfirm.value) {
-				alert('새 비밀번호가 일치하지 않습니다.');
-				throw new Error('Passwords do not match.');
-			}
-			if (!currentPassword.value) {
-				alert('현재 비밀번호를 입력해주세요.');
-				throw new Error('Current password is required.');
-			}
-			await updatePassword(currentPassword.value, newPassword.value);
-		}
+	if (isNicknameChanged) {
+		tasks.push(
+			updateMyNickname(nickname.value).catch(err => ({
+				error: true,
+				type: 'nickname',
+				message:
+					err.response?.data?.message ||
+					'닉네임 변경 중 오류가 발생했습니다.',
+			})),
+		);
+	}
 
-		alert('프로필이 성공적으로 업데이트되었습니다.');
-
-		// --- 3. Refresh UI and State ---
-		const updatedUser = await getMyInfo();
-		user.value = updatedUser; // Update the injected user ref
-	} catch (error) {
-		const errorMessage =
-			error.response?.data?.message ||
-			error.message ||
-			'프로필 업데이트에 실패했습니다.';
-		alert(errorMessage);
-
-		// If image upload succeeded but profile update failed, the user might be left in an inconsistent state.
-		// A more robust solution could involve a state machine or a compensating transaction.
-		// For now, we alert the user.
-		if (isImageChanged) {
-			alert(
-				'참고: 이미지 업로드는 성공했으나 프로필 정보 업데이트에 실패했습니다. 페이지를 새로고침하여 현재 상태를 확인해주세요.',
-			);
+	if (isPasswordEntered) {
+		if (newPassword.value !== confirmPassword.value) {
+			alert('새 비밀번호가 일치하지 않습니다.');
+			isSaving.value = false;
+			return;
 		}
-		console.error('프로필 업데이트 실패:', error);
-	} finally {
-		loading.value = false;
-		// Reset state after completion
-		selectedFile.value = null;
-		if (imagePreviewUrl.value) {
-			URL.revokeObjectURL(imagePreviewUrl.value);
-			imagePreviewUrl.value = null;
-		}
+		tasks.push(
+			updatePassword(currentPassword.value, newPassword.value).catch(err => ({
+				error: true,
+				type: 'password',
+				message:
+					err.response?.data?.message ||
+					'비밀번호 변경 중 오류가 발생했습니다.',
+			})),
+		);
+	}
+
+	const results = await Promise.allSettled(tasks);
+
+	isSaving.value = false;
+
+	const failures = results
+		.filter(res => res.value?.error)
+		.map(res => res.value.message);
+
+	if (failures.length > 0) {
+		alert(`다음과 같은 오류가 발생했습니다:\n- ${failures.join('\n- ')}`);
+	} else {
+		alert('회원정보가 성공적으로 수정되었습니다.');
+		// Update original nickname to prevent re-submitting
+		originalNickname.value = nickname.value;
+		// Clear password fields
 		currentPassword.value = '';
 		newPassword.value = '';
-		newPasswordConfirm.value = '';
+		confirmPassword.value = '';
 	}
 };
 
