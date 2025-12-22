@@ -125,6 +125,7 @@ const pagingInfo = ref({
 
 // 매물 검색 함수
 const searchMapProperties = async (params = {}) => {
+    console.log('MapPage: searchMapProperties called', params);
 	loading.value = true;
 	error.value = null;
     selectedPropertyId.value = null; // 검색 시 선택 초기화
@@ -146,6 +147,7 @@ const searchMapProperties = async (params = {}) => {
 			page: params.page || 1, // 파라미터로 받은 페이지 사용, 기본값 1
 			size: 20, // 기본값 20으로 복구
 		};
+        console.log('MapPage: Sending search request with params:', searchParams);
 		const response = await searchProperties(searchParams);
         if (response && response.data) {
             properties.value = response.data;
@@ -221,13 +223,6 @@ const isInitialLoad = ref(true);
 
 const handleMapViewportUpdate = (viewport) => {
     currentViewport.value = viewport;
-    
-    // 초기 로딩 시에는 검색을 수행하지 않음
-    if (isInitialLoad.value) {
-        isInitialLoad.value = false;
-        return;
-    }
-
     searchMapProperties(); // Trigger search with new viewport
 };
 
