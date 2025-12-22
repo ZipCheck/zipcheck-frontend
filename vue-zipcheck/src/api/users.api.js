@@ -39,3 +39,33 @@ export const updateAlarmSettings = agree => {
 export const deleteMyAccount = () => {
 	return http.delete('/users/me');
 };
+
+/**
+ * 찜한 매물 목록을 조회합니다.
+ * @param {number} page 페이지 번호
+ * @param {number} size 페이지 크기
+ * @returns {Promise<any>}
+ */
+export const getFavoriteProperties = (page = 1, size = 10) => {
+    return http.get('/api/interests', { params: { page, size } });
+};
+
+/**
+ * 찜한 매물을 해제합니다.
+ * @param {number} dealNo 매물 번호
+ * @returns {Promise<any>}
+ */
+export const removeFavoriteProperty = (dealNo) => {
+    return http.delete(`/api/interests/${dealNo}`);
+};
+
+/**
+ * 매물을 찜합니다.
+ * @param {number} dealNo 매물 번호
+ * @returns {Promise<any>}
+ */
+export const addFavoriteProperty = (dealNo) => {
+    return http.post('/api/interests', { dealNo });
+};
+
+

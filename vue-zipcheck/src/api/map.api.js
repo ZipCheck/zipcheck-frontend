@@ -114,3 +114,15 @@ export const getApartmentAiSummary = async (aptSeq) => {
         throw error;
     }
 };
+
+/**
+ * 지도에 이모티콘을 등록합니다.
+ * @param {Object} emoticonData 이모티콘 데이터
+ * @param {number} emoticonData.latitude 위도
+ * @param {number} emoticonData.longitude 경도
+ * @param {string} emoticonData.emoticonType 이모티콘 종류 (e.g., '좋아요')
+ * @returns {Promise<any>}
+ */
+export const addEmoticon = (emoticonData) => {
+    return http.post('/zipcheck/map/emoticons', emoticonData);
+};

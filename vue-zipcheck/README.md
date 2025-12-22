@@ -1,153 +1,160 @@
-# 프로필 이미지 삭제 기능 DB 미반영 이슈 수정 요청
+# 🧡 찜한 매물 페이지 프론트엔드 구현 요청서 (ZipCheck)
 
-본 문서는 **ZipCheck 마이페이지 – 프로필 이미지 삭제 시 DB에 URL이 남아있는 문제**를 해결하기 위한 프론트엔드 수정 요청서입니다.
-백엔드 로직은 이미 수정 완료되었으며, 현재 문제의 원인은 **프론트엔드 삭제 요청 방식**에 있습니다.
+본 문서는 **ZipCheck (SSAFYHOME)** 프로젝트의 **마이페이지 > 찜한 매물** 화면에 대해,
+프론트엔드를 생성하는 AI에게 **구현을 요청하기 위한 README 스크립트**입니다.
 
----
-
-## 1. 현재 문제 상황 (확정된 증상)
-
-* 마이페이지에서 "프로필 이미지 삭제" 버튼 클릭 시
-
-  * 화면에서는 기본 이미지로 바뀌는 것처럼 보임
-  * 하지만 DB(`users.profile_image_url`)에는 기존 S3 URL이 그대로 남아 있음
-
-실제 DB 값 예시:
-
-```
-https://zipcheck-profile.s3.ap-northeast-2.amazonaws.com/profile/1/7c706e4e-9eb5-47fb-acd6-42ff3cf1b561.png
-```
-
-이는 다음 SQL이 **실행되지 않았다는 의미**입니다.
-
-```sql
-UPDATE users
-SET profile_image_url = NULL
-WHERE user_id = ?;
-```
+> 첨부된 이미지(UI 시안)를 기준으로 화면 구조와 UX를 그대로 유지하면서 기능을 구현해 주세요.
 
 ---
 
-## 2. 백엔드 삭제 API 정보 (이미 구현 완료)
+## 1. 화면 개요
 
-### 프로필 이미지 업로드 / 삭제 API
+* 위치: **마이페이지 > 찜한 매물**
+* 목적: 사용자가 **관심(찜) 등록한 매물 목록을 조회·관리**
+* 기준 UI: 첨부된 이미지와 동일한 레이아웃
 
-* Method: PATCH
-* URL: `/users/me/profile-image`
-* Content-Type: multipart/form-data
-* 인증: Authorization: Bearer {accessToken} 필수
+---
 
-동작 규칙:
+## 2. 레이아웃 구성 (이미지 기준)
 
-* `image` 파트가 있으면 → 업로드
-* `image` 파트가 없으면 → **삭제**
+### 2.1 좌측 사이드바 (고정)
 
-```java
-@PatchMapping(
-    value = "/me/profile-image",
-    consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-)
-public ResponseEntity<ApiResponse<?>> updateProfileImage(
-        @RequestPart(value = "image", required = false) MultipartFile image
-) {
-    // image == null → 삭제 처리
+* 마이페이지 메뉴
+
+  * 회원정보 수정
+  * 내가 작성한 게시글
+  * **찜한 매물 (현재 선택 상태)**
+  * 알림 설정
+  * 로그아웃
+
+> 기존 디자인 유지 (선택된 메뉴 강조)
+
+### 2.2 메인 콘텐츠 영역
+
+* 상단 카드
+
+  * 제목: **찜한 매물**
+  * 설명: *"내가 찜한 매물 목록입니다."*
+
+* 하단 리스트 영역
+
+  * 찜한 매물 카드 리스트 출력
+
+---
+
+## 3. 찜한 매물 리스트 UI 요구사항
+
+### 3.1 기본 카드 구성
+
+각 매물은 **카드(Card) 형태**로 표시합니다.
+
+카드에 포함될 정보:
+
+* 아파트명 (`aptName`)
+* 거래 정보 (`dealAmount`, 층수, 면적)
+* 주소 정보 (지번 또는 도로명)
+* 찜 등록일 (`createdAt`)
+
+---
+
+### 3.2 카드 내 액션 버튼
+
+각 카드 우측 또는 하단에 다음 액션을 배치합니다.
+
+1. **찜 해제 버튼**
+
+   * 하트 아이콘 (활성 상태)
+   * 클릭 시 찜 해제 API 호출
+   * 성공 시 리스트에서 즉시 제거
+
+2. **지도에서 보기 버튼**
+
+   * 클릭 시 지도 페이지로 이동
+   * 해당 매물 위치를 중심으로 지도 이동
+
+3. **이모티콘 상태 표시**
+
+   * `hasSticker = true`
+
+     * "이모티콘 등록 완료" 배지 표시
+   * `hasSticker = false`
+
+     * "이모티콘 등록하기" 버튼 표시
+     * 클릭 시 지도 페이지 + 위치 인증 플로우로 이동
+
+---
+
+## 4. 데이터 연동 (백엔드 API)
+
+### 4.1 찜 목록 조회
+
+```http
+GET /api/interests?page=1&size=10
+```
+
+응답 구조:
+
+```json
+{
+  "items": [
+    {
+      "interestId": 1,
+      "dealNo": 123,
+      "aptName": "OO아파트",
+      "dealAmount": "3억",
+      "aptDong": "101동",
+      "floor": "10",
+      "excluUseAr": 84.5,
+      "createdAt": "2025-01-10T12:00:00",
+      "hasSticker": false
+    }
+  ],
+  "totalCount": 5,
+  "page": 1,
+  "size": 10
 }
 ```
 
 ---
 
-## 3. 문제 원인 (확정)
+### 4.2 찜 해제
 
-현재 프론트엔드에서 삭제 버튼 클릭 시 다음 중 하나의 잘못된 요청을 보내고 있습니다.
-
-* `/users/me` (닉네임 수정 API) 호출
-* `/users/me/profile-image` 호출 시 body 없이 PATCH 요청
-* JSON 요청(`application/json`)으로 호출
-
-위 방식들은 모두 **컨트롤러가 매핑되지 않거나 삭제 로직이 실행되지 않습니다.**
-
----
-
-## 4. 반드시 구현해야 할 삭제 요청 방식 (정답)
-
-### 프론트엔드 삭제 버튼 로직
-
-```js
-const deleteProfileImage = async () => {
-  const formData = new FormData()
-
-  await api.patch(
-    '/users/me/profile-image',
-    formData
-  )
-
-  // 서버 반영 후 상태 갱신
-  profileImageUrl.value = null
-}
+```http
+DELETE /api/interests/{dealNo}
 ```
 
-필수 조건:
-
-* 반드시 `FormData` 객체를 전송할 것
-* `image` 필드는 추가하지 않음
-* Content-Type을 수동으로 지정하지 말 것
-* 공통 axios 인스턴스(api)를 사용할 것
+* 성공 시 해당 카드 제거
 
 ---
 
-## 5. UI 렌더링 필수 조건
+## 5. UX / 인터랙션 요구사항
 
-프로필 이미지 렌더링 시, 기본 이미지 fallback 처리를 반드시 적용해야 합니다.
+* 데이터 로딩 중 Skeleton UI 표시
+* 찜 목록이 없을 경우:
 
-```html
-<img
-  :src="profileImageUrl || '/default-profile.png'"
-  alt="프로필 이미지"
-/>
-```
+  * "아직 찜한 매물이 없습니다" 안내 문구 표시
+* 찜 해제 시:
 
-삭제 후 `profileImageUrl`이 `null`일 경우에도 기존 이미지가 남지 않도록 해야 합니다.
+  * 토스트 메시지 "관심 매물이 삭제되었습니다"
 
 ---
 
-## 6. 확인 방법 (필수)
+## 6. 기술 스택 가정
 
-수정 후 아래 사항을 반드시 확인해야 합니다.
-
-1. Network 탭
-
-   * Request URL: `PATCH /users/me/profile-image`
-   * Request Headers에 `Content-Type: multipart/form-data; boundary=...`
-   * Authorization 헤더 포함 여부 확인
-
-2. 서버 로그
-
-   * 프로필 이미지 삭제 API 컨트롤러 진입 로그 확인
-
-3. DB 확인
-
-   ```sql
-   SELECT profile_image_url FROM users WHERE user_id = ?;
-   ```
-
-   * 결과가 `NULL`이면 정상
+* Framework: **Vue 3 (Vite)**
+* 상태 관리: Pinia 또는 Composition API
+* 스타일링: TailwindCSS
+* API 통신: Axios
 
 ---
 
-## 7. 금지 사항
+## 7. AI 요청용 핵심 요약 문장
 
-* body 없는 PATCH 요청
-* JSON 요청으로 프로필 이미지 삭제 시도
-* `/users/me` API로 사진 삭제 처리
-* UI 상태만 변경하고 서버 요청을 생략하는 방식
+> "첨부된 마이페이지 > 찜한 매물 UI 이미지를 기준으로,
+> 백엔드에서 제공하는 관심 매물 API와 연동하여
+> 찜한 매물 리스트 조회, 찜 해제, 지도 이동, 이모티콘 등록 상태 표시까지
+> 가능한 Vue 3 기반 프론트엔드 화면을 구현해 주세요."
 
 ---
 
-## 8. 목표 결과
-
-* 삭제 버튼 클릭 시 서버의 삭제 로직이 실제로 실행됨
-* DB의 `profile_image_url` 컬럼이 `NULL`로 변경됨
-* 화면과 DB 상태가 일치
-
-본 문서를 기준으로 **프로필 이미지 삭제 로직을 수정해 주세요.**
-UI 디자인은 유지하고, **요청 방식 및 상태 갱신 로직만 수정**하면 됩니다.
+본 문서는 **프론트엔드 구현 AI에게 그대로 전달 가능한 요청 스크립트**입니다.

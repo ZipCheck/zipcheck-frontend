@@ -1,3 +1,101 @@
+
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { getApartmentDeals } from '@/api/map.api.js';
+import { addFavoriteProperty, removeFavoriteProperty } from '@/api/users.api.js';
+import PropertyCard from '@/components/map/PropertyCard.vue';
+import AiReport from '@/components/listing-detail/AiReport.vue';
+import ToastMessage from '@/components/common/ToastMessage.vue';
+
+const route = useRoute();
+const deals = ref([]);
+const loading = ref(true);
+const error = ref(null);
+const isFavorited = ref(false); // 찜 상태 (초기값은 API 연동 후 변경 필요)
+
+// Toast state
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('info');
+
+const pagingInfo = ref({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0
+});
+
+const aptName = computed(() => {
+    return deals.value.length > 0 ? deals.value[0].aptName : '아파트 상세 정보';
+});
+
+const fetchDeals = async (page = 1) => {
+    const aptSeq = route.params.aptSeq;
+    if (!aptSeq) {
+        error.value = new Error('아파트 정보가 없습니다.');
+        loading.value = false;
+        return;
+    }
+
+    loading.value = true;
+    try {
+        const response = await getApartmentDeals(aptSeq, page);
+        
+        if (response && response.data) {
+            deals.value = response.data;
+            // TODO: 실제 찜 상태를 API로부터 받아와 isFavorited.value에 설정해야 함
+            pagingInfo.value = {
+                currentPage: response.currentPage || 1,
+                totalPages: response.totalPages || 1,
+                totalCount: response.totalCount || 0
+            };
+        } else if (Array.isArray(response)) {
+            deals.value = response;
+            pagingInfo.value = { currentPage: 1, totalPages: 1, totalCount: response.length };
+        }
+    } catch (err) {
+        console.error('Failed to fetch apartment deals:', err);
+        error.value = err;
+    } finally {
+        loading.value = false;
+    }
+};
+
+const toggleFavorite = async () => {
+    const dealNo = deals.value[0]?.no; // 대표 매물로 가정
+    if (!dealNo) return;
+
+    try {
+        if (isFavorited.value) {
+            await removeFavoriteProperty(dealNo);
+            toastMessage.value = '찜 목록에서 제거되었습니다.';
+        } else {
+            await addFavoriteProperty(dealNo);
+            toastMessage.value = '찜 목록에 추가되었습니다.';
+        }
+        isFavorited.value = !isFavorited.value;
+        toastType.value = 'success';
+        showToast.value = true;
+    } catch (err) {
+        console.error('Failed to toggle favorite:', err);
+        toastMessage.value = '요청에 실패했습니다.';
+        toastType.value = 'error';
+        showToast.value = true;
+    }
+};
+
+
+const changePage = (page) => {
+    if (page < 1 || page > pagingInfo.value.totalPages) return;
+    fetchDeals(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+onMounted(() => {
+    fetchDeals();
+});
+</script>
+
 <template>
   <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
     <div v-if="loading && deals.length === 0" class="text-center py-10">
@@ -18,9 +116,19 @@
                 <span class="material-symbols-outlined text-lg">arrow_back</span> 
                 <span class="text-sm font-medium">지도 목록으로 돌아가기</span>
             </button>
-            <div class="flex items-end gap-3">
-                <h1 class="text-3xl font-bold text-gray-900">{{ aptName }}</h1>
-                <span class="text-gray-500 mb-1.5">총 <span class="text-primary font-bold">{{ pagingInfo.totalCount || deals.length }}</span>건의 매물</span>
+            <div class="flex items-center justify-between">
+                <div class="flex items-end gap-3">
+                    <h1 class="text-3xl font-bold text-gray-900">{{ aptName }}</h1>
+                    <span class="text-gray-500 mb-1.5">총 <span class="text-primary font-bold">{{ pagingInfo.totalCount || deals.length }}</span>건의 매물</span>
+                </div>
+                <button @click="toggleFavorite" class="p-3 rounded-full hover:bg-gray-100 transition-colors">
+                    <span 
+                        class="material-symbols-outlined"
+                        :class="isFavorited ? 'text-red-500 icon-filled' : 'text-gray-400'"
+                    >
+                        favorite
+                    </span>
+                </button>
             </div>
         </div>
 
@@ -71,69 +179,6 @@
             </div>
         </div>
     </div>
+    <ToastMessage v-model:show="showToast" :message="toastMessage" :type="toastType" />
   </main>
 </template>
-
-<script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { getApartmentDeals } from '@/api/map.api.js';
-import PropertyCard from '@/components/map/PropertyCard.vue';
-import AiReport from '@/components/listing-detail/AiReport.vue';
-
-const route = useRoute();
-const deals = ref([]);
-const loading = ref(true);
-const error = ref(null);
-
-const pagingInfo = ref({
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0
-});
-
-const aptName = computed(() => {
-    return deals.value.length > 0 ? deals.value[0].aptName : '아파트 상세 정보';
-});
-
-const fetchDeals = async (page = 1) => {
-    const aptSeq = route.params.aptSeq;
-    if (!aptSeq) {
-        error.value = new Error('아파트 정보가 없습니다.');
-        loading.value = false;
-        return;
-    }
-
-    loading.value = true;
-    try {
-        const response = await getApartmentDeals(aptSeq, page);
-        
-        if (response && response.data) {
-            deals.value = response.data;
-            pagingInfo.value = {
-                currentPage: response.currentPage || 1,
-                totalPages: response.totalPages || 1,
-                totalCount: response.totalCount || 0
-            };
-        } else if (Array.isArray(response)) {
-            deals.value = response;
-            pagingInfo.value = { currentPage: 1, totalPages: 1, totalCount: response.length };
-        }
-    } catch (err) {
-        console.error('Failed to fetch apartment deals:', err);
-        error.value = err;
-    } finally {
-        loading.value = false;
-    }
-};
-
-const changePage = (page) => {
-    if (page < 1 || page > pagingInfo.value.totalPages) return;
-    fetchDeals(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-onMounted(() => {
-    fetchDeals();
-});
-</script>
