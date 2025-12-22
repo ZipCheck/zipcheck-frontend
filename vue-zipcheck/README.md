@@ -1,153 +1,159 @@
-# 프로필 이미지 삭제 기능 DB 미반영 이슈 수정 요청
+# 프론트엔드 수정 요청 스크립트 – 찜 상태 표시 및 토글 버그 수정
 
-본 문서는 **ZipCheck 마이페이지 – 프로필 이미지 삭제 시 DB에 URL이 남아있는 문제**를 해결하기 위한 프론트엔드 수정 요청서입니다.
-백엔드 로직은 이미 수정 완료되었으며, 현재 문제의 원인은 **프론트엔드 삭제 요청 방식**에 있습니다.
+## 1. 현재 발생 중인 문제 요약
 
----
+* 서버 DB에는 이미 찜(interest) 데이터가 존재함
+* `/api/listings` 응답에는 `isFavorite: true` 가 정상적으로 내려오고 있음
+* 하지만 프론트 화면에서는 하트가 비어 있는 상태로 표시됨
+* 하트 클릭 시 항상 `POST /api/interests/{dealNo}` 가 호출되어
+  서버에서 **"이미 등록된 관심 매물입니다" 예외가 발생**함
 
-## 1. 현재 문제 상황 (확정된 증상)
-
-* 마이페이지에서 "프로필 이미지 삭제" 버튼 클릭 시
-
-  * 화면에서는 기본 이미지로 바뀌는 것처럼 보임
-  * 하지만 DB(`users.profile_image_url`)에는 기존 S3 URL이 그대로 남아 있음
-
-실제 DB 값 예시:
-
-```
-https://zipcheck-profile.s3.ap-northeast-2.amazonaws.com/profile/1/7c706e4e-9eb5-47fb-acd6-42ff3cf1b561.png
-```
-
-이는 다음 SQL이 **실행되지 않았다는 의미**입니다.
-
-```sql
-UPDATE users
-SET profile_image_url = NULL
-WHERE user_id = ?;
-```
+👉 이는 **프론트에서 `isFavorite` 값을 렌더링/토글 로직에 반영하지 않고 있기 때문**임
 
 ---
 
-## 2. 백엔드 삭제 API 정보 (이미 구현 완료)
+## 2. 백엔드 API 계약 (확정 사항)
 
-### 프로필 이미지 업로드 / 삭제 API
+### 2.1 매물 목록 조회
 
-* Method: PATCH
-* URL: `/users/me/profile-image`
-* Content-Type: multipart/form-data
-* 인증: Authorization: Bearer {accessToken} 필수
+```
+GET /api/listings
+Authorization: Bearer {accessToken}
+```
 
-동작 규칙:
+응답 구조:
 
-* `image` 파트가 있으면 → 업로드
-* `image` 파트가 없으면 → **삭제**
-
-```java
-@PatchMapping(
-    value = "/me/profile-image",
-    consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-)
-public ResponseEntity<ApiResponse<?>> updateProfileImage(
-        @RequestPart(value = "image", required = false) MultipartFile image
-) {
-    // image == null → 삭제 처리
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "dealNo": 123,
+      "aptName": "디팰리스",
+      "dealAmount": "28억",
+      "isFavorite": true
+    }
+  ]
 }
 ```
 
----
-
-## 3. 문제 원인 (확정)
-
-현재 프론트엔드에서 삭제 버튼 클릭 시 다음 중 하나의 잘못된 요청을 보내고 있습니다.
-
-* `/users/me` (닉네임 수정 API) 호출
-* `/users/me/profile-image` 호출 시 body 없이 PATCH 요청
-* JSON 요청(`application/json`)으로 호출
-
-위 방식들은 모두 **컨트롤러가 매핑되지 않거나 삭제 로직이 실행되지 않습니다.**
+* `isFavorite` 는 **DB 기준의 찜 상태**
+* 프론트는 이 값을 **절대 초기값으로 덮어쓰면 안 됨**
 
 ---
 
-## 4. 반드시 구현해야 할 삭제 요청 방식 (정답)
+### 2.2 찜 토글 API
 
-### 프론트엔드 삭제 버튼 로직
+* 찜 등록
+
+```
+POST /api/interests/{dealNo}
+```
+
+* 찜 취소
+
+```
+DELETE /api/interests/{dealNo}
+```
+
+---
+
+## 3. 프론트에서 반드시 수정해야 할 사항
+
+### 3.1 API 응답 매핑 (중요)
+
+❌ 잘못된 코드
 
 ```js
-const deleteProfileImage = async () => {
-  const formData = new FormData()
+items.value = response.data;
+```
 
-  await api.patch(
-    '/users/me/profile-image',
-    formData
-  )
+✅ 올바른 코드
 
-  // 서버 반영 후 상태 갱신
-  profileImageUrl.value = null
+```js
+items.value = response.data.data;
+```
+
+> 이 실수로 인해 `isFavorite`가 항상 `undefined → false` 처리되고 있음
+
+---
+
+### 3.2 하트 아이콘 상태 바인딩
+
+❌ 잘못된 방식
+
+```vue
+<HeartIcon :active="false" />
+```
+
+✅ 반드시 아래처럼 구현
+
+```vue
+<HeartIcon :active="item.isFavorite" />
+```
+
+---
+
+### 3.3 찜 토글 로직 (절대 중요)
+
+❌ 현재 문제 로직 (무조건 POST 호출)
+
+```js
+await api.post(`/api/interests/${dealNo}`);
+```
+
+✅ 반드시 상태 기반 분기 처리
+
+```js
+async function toggleFavorite(item) {
+  if (item.isFavorite) {
+    await api.delete(`/api/interests/${item.dealNo}`);
+    item.isFavorite = false;
+  } else {
+    await api.post(`/api/interests/${item.dealNo}`);
+    item.isFavorite = true;
+  }
 }
 ```
 
-필수 조건:
-
-* 반드시 `FormData` 객체를 전송할 것
-* `image` 필드는 추가하지 않음
-* Content-Type을 수동으로 지정하지 말 것
-* 공통 axios 인스턴스(api)를 사용할 것
-
 ---
 
-## 5. UI 렌더링 필수 조건
+### 3.4 카드 클릭 이벤트와 분리
 
-프로필 이미지 렌더링 시, 기본 이미지 fallback 처리를 반드시 적용해야 합니다.
+* 하트 클릭 시 카드 상세 페이지로 이동하면 안 됨
 
-```html
-<img
-  :src="profileImageUrl || '/default-profile.png'"
-  alt="프로필 이미지"
-/>
+```vue
+<button @click.stop="toggleFavorite(item)">
+  <HeartIcon :active="item.isFavorite" />
+</button>
 ```
 
-삭제 후 `profileImageUrl`이 `null`일 경우에도 기존 이미지가 남지 않도록 해야 합니다.
+---
+
+## 4. 디버깅 필수 확인 코드
+
+구현 후 반드시 콘솔에서 아래 값 확인:
+
+```js
+console.log(item.dealNo, item.isFavorite);
+```
+
+* 찜한 매물 → `true`
+* 찜 안 한 매물 → `false`
 
 ---
 
-## 6. 확인 방법 (필수)
+## 5. 정상 동작 기준 (체크리스트)
 
-수정 후 아래 사항을 반드시 확인해야 합니다.
-
-1. Network 탭
-
-   * Request URL: `PATCH /users/me/profile-image`
-   * Request Headers에 `Content-Type: multipart/form-data; boundary=...`
-   * Authorization 헤더 포함 여부 확인
-
-2. 서버 로그
-
-   * 프로필 이미지 삭제 API 컨트롤러 진입 로그 확인
-
-3. DB 확인
-
-   ```sql
-   SELECT profile_image_url FROM users WHERE user_id = ?;
-   ```
-
-   * 결과가 `NULL`이면 정상
+* [ ] 이미 찜한 매물은 처음부터 하트가 채워져 있음
+* [ ] 하트 클릭 시 찜/취소가 정상적으로 토글됨
+* [ ] 찜 취소 시 `DELETE` 호출됨
+* [ ] 중복 POST 요청 발생하지 않음
+* [ ] 서버에 "이미 등록된 관심 매물입니다" 에러가 더 이상 발생하지 않음
 
 ---
 
-## 7. 금지 사항
+## 6. 한 줄 요약 (프론트 AI용)
 
-* body 없는 PATCH 요청
-* JSON 요청으로 프로필 이미지 삭제 시도
-* `/users/me` API로 사진 삭제 처리
-* UI 상태만 변경하고 서버 요청을 생략하는 방식
-
----
-
-## 8. 목표 결과
-
-* 삭제 버튼 클릭 시 서버의 삭제 로직이 실제로 실행됨
-* DB의 `profile_image_url` 컬럼이 `NULL`로 변경됨
-* 화면과 DB 상태가 일치
-
-본 문서를 기준으로 **프로필 이미지 삭제 로직을 수정해 주세요.**
-UI 디자인은 유지하고, **요청 방식 및 상태 갱신 로직만 수정**하면 됩니다.
+> `/api/listings` 응답의 `isFavorite` 값을 그대로 사용해 하트 상태를 렌더링하고,
+> 하트 클릭 시 `isFavorite` 기준으로 POST/DELETE를 분기 처리해야 한다.

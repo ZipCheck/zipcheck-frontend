@@ -4,63 +4,6 @@
     <div id="map" class="w-full h-full z-0"></div>
 
     <!-- 기존 UI 요소 (버튼 등) 유지 -->
-    <div
-			class="absolute top-6 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-2xl"
-		>
-			<div
-				class="bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur-md p-2 rounded-full shadow-soft border border-white/50 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6 pr-3 pl-4 py-2"
-			>
-				<div class="flex items-center gap-3 w-full md:w-auto">
-					<div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-					<span
-						class="text-sm font-medium text-text-sub-light dark:text-text-sub-dark whitespace-nowrap"
-						>현재 위치 인증이 필요합니다</span
-					>
-				</div>
-				<div class="flex items-center gap-2 w-full md:w-auto justify-end">
-					<button
-						class="bg-text-main-light dark:bg-white text-white dark:text-black text-xs font-bold px-4 py-2 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm whitespace-nowrap"
-					>
-						<span class="material-symbols-outlined text-[16px]"
-							>my_location</span
-						>
-						위치 인증하기
-					</button>
-					<div
-						class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2 hidden md:block"
-					></div>
-					<div class="flex items-center gap-1">
-						<button
-							class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-green-100 dark:hover:bg-green-900/30 flex items-center justify-center transition-colors group"
-							title="좋아요"
-						>
-							<span
-								class="material-symbols-outlined text-[18px] text-gray-400 group-hover:text-green-600 dark:text-gray-500 dark:group-hover:text-green-400"
-								>sentiment_satisfied</span
-							>
-						</button>
-						<button
-							class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 flex items-center justify-center transition-colors group"
-							title="보통"
-						>
-							<span
-								class="material-symbols-outlined text-[18px] text-gray-400 group-hover:text-yellow-600 dark:text-gray-500 dark:group-hover:text-yellow-400"
-								>sentiment_neutral</span
-							>
-						</button>
-						<button
-							class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 flex items-center justify-center transition-colors group"
-							title="별로예요"
-						>
-							<span
-								class="material-symbols-outlined text-[18px] text-gray-400 group-hover:text-red-600 dark:text-gray-500 dark:group-hover:text-red-400"
-								>sentiment_dissatisfied</span
-							>
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
 		<div class="absolute bottom-8 right-8 z-20 flex flex-col gap-3 items-end">
 			<div
 				class="bg-surface-light dark:bg-surface-dark text-xs px-3 py-1.5 rounded-lg shadow-md mb-1 animate-bounce border border-gray-100 dark:border-gray-700"
@@ -115,6 +58,10 @@ const props = defineProps({
     type: [Array, Object],
     default: () => [],
   },
+  userPosition: {
+    type: Object,
+    default: null,
+  },
 });
 
 const map = shallowRef(null);
@@ -157,6 +104,16 @@ const initMap = () => {
   // Add event listeners for map idle and zoom_changed
   window.kakao.maps.event.addListener(map.value, 'idle', emitMapViewport);
   window.kakao.maps.event.addListener(map.value, 'zoom_changed', emitMapViewport);
+
+  // 지도 클릭 이벤트 추가
+  window.kakao.maps.event.addListener(map.value, 'click', function (mouseEvent) {
+    // 클릭한 위도, 경도 정보를 가져옵니다
+    const latlng = mouseEvent.latLng;
+    emit('map-click', {
+        lat: latlng.getLat(),
+        lng: latlng.getLng(),
+    });
+  });
 
   // Initial emit of map viewport after map is ready
   emitMapViewport();
@@ -293,7 +250,7 @@ const drawIndividualMarkers = (list) => {
   });
 };
 
-const emit = defineEmits(['select-property', 'update:map-viewport']);
+const emit = defineEmits(['select-property', 'update:map-viewport', 'map-click']);
 
 const emitMapViewport = () => {
     if (!map.value) return;
@@ -320,6 +277,33 @@ const emitMapViewport = () => {
     console.log('KakaoMap: Emitting map viewport:', viewport);
     emit('update:map-viewport', viewport);
 };
+
+let userPositionMarker = null; // 사용자 위치 마커 참조
+
+// userPosition prop 변경을 감지하여 사용자 위치 마커 업데이트
+watch(() => props.userPosition, (newUserPosition) => {
+  if (map.value && newUserPosition) {
+    const markerPosition = new window.kakao.maps.LatLng(newUserPosition.lat, newUserPosition.lng);
+
+    // 기존 마커가 있으면 위치만 업데이트, 없으면 새로 생성
+    if (userPositionMarker) {
+      userPositionMarker.setPosition(markerPosition);
+    } else {
+      // 파란색 점으로 표현되는 마커 이미지
+      const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_point.png';
+      const imageSize = new window.kakao.maps.Size(12, 12);
+      const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
+
+      userPositionMarker = new window.kakao.maps.Marker({
+        position: markerPosition,
+        image: markerImage,
+      });
+      userPositionMarker.setMap(map.value);
+      // 처음 위치를 받았을 때만 지도의 중심을 이동
+      map.value.setCenter(markerPosition);
+    }
+  }
+}, { deep: true });
 
 // properties prop 변경을 감지하여 마커 업데이트
 watch(() => props.properties, (newProperties) => {
