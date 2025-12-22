@@ -147,17 +147,15 @@ const searchMapProperties = async (params = {}) => {
 			size: 20, // 기본값 20으로 복구
 		};
 		const response = await searchProperties(searchParams);
-        // API 응답 구조 변경에 따라 실제 데이터 배열을 올바르게 할당합니다.
-        properties.value = response.data || response;
-
-        // 페이징 정보가 응답에 포함된 경우 업데이트합니다.
-        if (response && response.currentPage !== undefined) {
+        if (response && response.data) {
+            properties.value = response.data;
             pagingInfo.value = {
                 currentPage: response.currentPage,
                 totalPages: response.totalPages,
                 totalCount: response.totalCount
             };
-            console.log('MapPage: Paging Info Updated:', pagingInfo.value);
+        } else {
+            properties.value = [];
         }
 	} catch (err) {
 		console.error('Failed to search properties:', err);
