@@ -16,6 +16,7 @@ import FavoriteProperties from '@/components/mypage/FavoriteProperties.vue';
 import NotificationSettings from '@/components/mypage/NotificationSettings.vue';
 import MapEmoticonPage from '@/pages/MapEmoticonPage.vue';
 import RealEstateListingDetailPage from '@/pages/RealEstateListingDetailPage.vue';
+import ApartmentDetailPage from '@/pages/ApartmentDetailPage.vue';
 import { isAuthenticated } from '@/stores/auth.store';
 
 const router = createRouter({
@@ -72,6 +73,10 @@ const router = createRouter({
 		{
 			path: '/map',
 			component: MapPage,
+		},
+		{
+			path: '/apartment/:aptSeq',
+			component: ApartmentDetailPage,
 		},
 		{
 			path: '/mypage',

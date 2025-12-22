@@ -1,17 +1,15 @@
 <template>
 	<div
+		@click="goToDetail"
 		class="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow cursor-pointer group"
 	>
 		<div class="flex justify-between items-start mb-2">
+			<!-- property.type 대신 '매매'로 고정 -->
 			<span
-				:class="[
-					'text-[10px] font-bold px-2 py-1 rounded-md',
-					property.type === '매매'
-						? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-						: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-				]"
-				>{{ property.type }}</span
+				class="text-[10px] font-bold px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
 			>
+				매매
+			</span>
 			<span
 				class="material-symbols-outlined text-gray-300 group-hover:text-primary transition-colors text-[20px]"
 				>favorite</span
@@ -20,62 +18,60 @@
 		<h3
 			class="font-bold text-base mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
 		>
-			{{ property.name }}
+			{{ property.aptName }}
 		</h3>
 		<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-3">
-			{{ property.address }}
+			{{ property.roadNm }} (지번: {{ property.jibun }})
 		</p>
 		<div class="flex items-center gap-2 mb-3">
-			<span class="text-lg font-bold">{{ property.price }}</span>
+			<span class="text-lg font-bold">{{ formattedDealAmount }}</span>
 			<span class="text-xs text-text-sub-light dark:text-text-sub-dark">{{
-				property.size
-			}}</span>
+				property.excluUseAr
+			}}㎡</span>
 		</div>
-		<div class="flex gap-2">
-			<div
-				v-for="(tag, index) in property.tags"
-				:key="index"
-				:class="[
-					'flex items-center gap-1 px-2 py-1 rounded-lg',
-					tag.type === 'positive'
-						? 'bg-green-50 dark:bg-green-900/20'
-						: tag.type === 'neutral'
-						? 'bg-yellow-50 dark:bg-yellow-900/20'
-						: 'bg-red-50 dark:bg-red-900/20',
-				]"
-			>
-				<span
-					class="material-symbols-outlined text-[14px]"
-					:class="[
-						tag.type === 'positive'
-							? 'text-green-600'
-							: tag.type === 'neutral'
-							? 'text-yellow-600'
-							: 'text-red-500',
-					]"
-					>{{ tag.icon }}</span
-				>
-				<span
-					class="text-[10px] font-medium"
-					:class="[
-						tag.type === 'positive'
-							? 'text-green-700 dark:text-green-400'
-							: tag.type === 'neutral'
-							? 'text-yellow-700 dark:text-yellow-400'
-							: 'text-red-600 dark:text-red-400',
-					]"
-					>{{ tag.text }}</span
-				>
-			</div>
-		</div>
+		<!-- property.tags 섹션은 API에 없으므로 제거 -->
 	</div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+
+const props = defineProps({
 	property: {
 		type: Object,
 		required: true,
 	},
+});
+
+const router = useRouter();
+
+const goToDetail = () => {
+    const id = props.property.dead_id || props.property.no;
+	if (props.property && id) {
+        console.log('PropertyCard: Navigating to detail page with ID:', id); // 로그 추가
+		router.push(`/listing/${id}`);
+	}
+};
+
+const formattedDealAmount = computed(() => {
+	if (!props.property || !props.property.dealAmount) return '';
+	// dealAmount가 "120,000" 형태의 문자열이라고 가정 (만원 단위)
+	const amountString = props.property.dealAmount.replace(/,/g, ''); // 콤마 제거
+	const amount = parseInt(amountString, 10);
+
+	if (isNaN(amount)) return props.property.dealAmount; // 숫자로 변환 실패 시 원본 반환
+
+	const billion = Math.floor(amount / 10000);
+	const million = amount % 10000;
+
+	let result = '';
+	if (billion > 0) {
+		result += `${billion}억 `;
+	}
+	if (million > 0) {
+		result += `${million.toLocaleString()}만원`;
+	}
+	return result.trim();
 });
 </script>

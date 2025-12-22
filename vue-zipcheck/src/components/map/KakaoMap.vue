@@ -1,41 +1,10 @@
 <template>
-	<section
-		class="flex-grow relative h-full bg-gray-200 dark:bg-gray-900 overflow-hidden"
-	>
-		<div class="absolute inset-0 map-pattern z-0"></div>
-		<div
-			class="absolute top-1/3 left-1/4 transform -translate-x-1/2 -translate-y-1/2 z-10 group cursor-pointer"
-		>
-			<div
-				class="bg-primary text-text-main-light font-bold text-xs px-3 py-1.5 rounded-full shadow-lg border-2 border-white dark:border-gray-700 transform transition-transform group-hover:scale-110"
-			>
-				20.5억
-			</div>
-			<div
-				class="absolute left-1/2 bottom-0 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white dark:border-t-gray-700 transform -translate-x-1/2 translate-y-full"
-			></div>
-		</div>
-		<div
-			class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 group cursor-pointer"
-		>
-			<div
-				class="bg-white dark:bg-gray-800 text-text-main-light dark:text-text-main-dark font-bold text-xs px-3 py-1.5 rounded-full shadow-lg border border-gray-200 dark:border-gray-600 transform transition-transform group-hover:scale-110 flex items-center gap-1"
-			>
-				<span class="w-2 h-2 rounded-full bg-green-500"></span>
-				12억
-			</div>
-		</div>
-		<div
-			class="absolute top-[60%] left-[65%] transform -translate-x-1/2 -translate-y-1/2 z-10 group cursor-pointer"
-		>
-			<div
-				class="bg-white dark:bg-gray-800 text-text-main-light dark:text-text-main-dark font-bold text-xs px-3 py-1.5 rounded-full shadow-lg border border-gray-200 dark:border-gray-600 transform transition-transform group-hover:scale-110 flex items-center gap-1"
-			>
-				<span class="w-2 h-2 rounded-full bg-purple-500"></span>
-				8.5억
-			</div>
-		</div>
-		<div
+  <section class="flex-grow relative h-full w-full bg-gray-200 dark:bg-gray-900 overflow-hidden">
+    <!-- 지도를 표시할 영역 (ID 필수) -->
+    <div id="map" class="w-full h-full z-0"></div>
+
+    <!-- 기존 UI 요소 (버튼 등) 유지 -->
+    <div
 			class="absolute top-6 left-1/2 transform -translate-x-1/2 z-20 w-[90%] max-w-2xl"
 		>
 			<div
@@ -135,13 +104,234 @@
 				>
 			</button>
 		</div>
-	</section>
+  </section>
 </template>
 
-<script setup></script>
+<script setup>
+import { onMounted, ref, watch, shallowRef } from 'vue';
+
+const props = defineProps({
+  properties: {
+    type: [Array, Object],
+    default: () => [],
+  },
+});
+
+const map = shallowRef(null);
+let markers = []; // 마커들을 담을 배열
+let overlays = []; // 오버레이들을 담을 배열
+
+onMounted(() => {
+  if (window.kakao && window.kakao.maps) {
+    initMap();
+  } else {
+    // SDK가 아직 로드되지 않았을 경우 0.5초마다 체크 (최대 10번 시도)
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      if (window.kakao && window.kakao.maps) {
+        clearInterval(interval);
+        initMap();
+      } else if (attempts >= 10) {
+        clearInterval(interval);
+        console.error('Kakao Maps SDK 로드 실패: 인터넷 연결이나 API 키 설정을 확인해주세요.');
+      }
+    }, 500);
+  }
+});
+
+const initMap = () => {
+  const container = document.getElementById('map');
+  const options = {
+    center: new window.kakao.maps.LatLng(37.566826, 126.9786567), // 초기 중심 좌표 (서울시청)
+    level: 3,
+  };
+  map.value = new window.kakao.maps.Map(container, options);
+
+  // 컨트롤러 추가
+  const mapTypeControl = new window.kakao.maps.MapTypeControl();
+  map.value.addControl(mapTypeControl, window.kakao.maps.ControlPosition.TOPRIGHT);
+  const zoomControl = new window.kakao.maps.ZoomControl();
+  map.value.addControl(zoomControl, window.kakao.maps.ControlPosition.RIGHT);
+
+  // Add event listeners for map idle and zoom_changed
+  window.kakao.maps.event.addListener(map.value, 'idle', emitMapViewport);
+  window.kakao.maps.event.addListener(map.value, 'zoom_changed', emitMapViewport);
+
+  // Initial emit of map viewport after map is ready
+  emitMapViewport();
+
+  // properties prop이 초기화되거나 변경될 때 마커를 그립니다.
+  drawMarkers(props.properties);
+};
+
+// 마커와 오버레이 모두 지우는 함수
+const clearMapObjects = () => {
+  for (let i = 0; i < markers.length; i++) {
+    markers[i].setMap(null);
+  }
+  markers = [];
+  
+  for (let i = 0; i < overlays.length; i++) {
+    overlays[i].setMap(null);
+  }
+  overlays = [];
+};
+
+// 매물 데이터 기반으로 마커 또는 클러스터를 그리는 함수
+const drawMarkers = (data) => {
+  console.log(`KakaoMap: drawMarkers called`, data); 
+  if (!map.value || !window.kakao || !window.kakao.maps) {
+    return; // 지도 객체가 없으면 그릴 수 없음
+  }
+
+  clearMapObjects(); // 기존 객체 모두 제거
+
+  const list = Array.isArray(data) ? data : [];
+
+  if (list.length === 0) return;
+
+  const firstItem = list[0];
+
+  // 타입 판별
+  if (firstItem.aptSeq !== undefined) {
+      // 아파트 데이터 (상세 모드)
+      drawApartments(list);
+  } else if (firstItem.dealCount !== undefined) {
+      // 클러스터 데이터 (광역 모드) - regionName, dealCount 포함
+      drawClusters(list);
+  } else {
+      // 개별 매물 데이터 (혹시 모를 하위 호환)
+      drawIndividualMarkers(list);
+  }
+};
+
+const drawApartments = (list) => {
+    list.forEach(item => {
+        if (!item.latitude || !item.longitude) return;
+
+        const position = new window.kakao.maps.LatLng(item.latitude, item.longitude);
+        
+        const content = document.createElement('div');
+        content.className = 'apartment-marker';
+        content.innerHTML = `
+            <div class="apt-name">${item.aptName}</div>
+            <div class="deal-count">${item.dealCount}건</div>
+        `;
+        
+        content.onclick = () => {
+             // 상세 조회 (2단계) - 아직 구현되지 않았지만 이벤트는 발생시킴
+             console.log('Select Apartment:', item.aptSeq);
+             emit('select-property', item.aptSeq);
+        };
+
+        const overlay = new window.kakao.maps.CustomOverlay({
+            map: map.value,
+            position: position,
+            content: content,
+            yAnchor: 1.2
+        });
+        
+        overlays.push(overlay);
+    });
+};
+
+const drawClusters = (list) => {
+    list.forEach(item => {
+        if (!item.latitude || !item.longitude) return;
+
+        const position = new window.kakao.maps.LatLng(item.latitude, item.longitude);
+        
+        const content = document.createElement('div');
+        content.className = 'cluster-overlay';
+        content.innerText = item.dealCount; // 백엔드 필드명 dealCount 사용
+        
+        content.onclick = () => {
+             const level = map.value.getLevel() - 1;
+             map.value.setLevel(level > 0 ? level : 1, { animate: true });
+             map.value.setCenter(position);
+        };
+
+        const overlay = new window.kakao.maps.CustomOverlay({
+            map: map.value,
+            position: position,
+            content: content,
+            yAnchor: 0.5
+        });
+        
+        overlays.push(overlay);
+    });
+};
+
+const drawIndividualMarkers = (list) => {
+  const bounds = new window.kakao.maps.LatLngBounds();
+
+  list.forEach((property) => {
+    if (!property.latitude || !property.longitude) return;
+
+    const lat = parseFloat(property.latitude);
+    const lng = parseFloat(property.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const position = new window.kakao.maps.LatLng(lat, lng);
+
+    const marker = new window.kakao.maps.Marker({
+      map: map.value,
+      position: position,
+      title: property.aptName,
+    });
+
+    markers.push(marker);
+    bounds.extend(position);
+
+    window.kakao.maps.event.addListener(marker, 'click', function() {
+        const id = property.deal_id || property.no;
+        console.log('KakaoMap: Marker clicked, emitting ID:', id);
+        emit('select-property', id);
+    });
+  });
+};
+
+const emit = defineEmits(['select-property', 'update:map-viewport']);
+
+const emitMapViewport = () => {
+    if (!map.value) return;
+
+    const bounds = map.value.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+
+    // Kakao Map 레벨은 작을수록 확대 (1이 가장 확대), 클수록 축소 (14가 가장 축소)
+    // 백엔드에서는 zoomLevel이 10 이하일 때 클러스터 모드라고 가정
+    // 따라서 Kakao Map 레벨을 백엔드 기준에 맞게 역전시켜야 함.
+    // 예: Kakao 레벨 1 -> 백엔드 14 (상세)
+    //     Kakao 레벨 14 -> 백엔드 1 (광역)
+    const currentKakaoZoomLevel = map.value.getLevel();
+    const backendCompatibleZoomLevel = 15 - currentKakaoZoomLevel; // 15는 카카오맵 최대 레벨 14 + 1. 이 값은 조정 가능.
+
+    const viewport = {
+        minLatitude: sw.getLat(),
+        maxLatitude: ne.getLat(),
+        minLongitude: sw.getLng(),
+        maxLongitude: ne.getLng(),
+        zoomLevel: backendCompatibleZoomLevel, // 역전된 줌 레벨 사용
+    };
+    console.log('KakaoMap: Emitting map viewport:', viewport);
+    emit('update:map-viewport', viewport);
+};
+
+// properties prop 변경을 감지하여 마커 업데이트
+watch(() => props.properties, (newProperties) => {
+  if (map.value) { // 지도 객체가 초기화된 후에만 마커를 그립니다.
+    drawMarkers(newProperties);
+  }
+}); // 배열 내부의 객체 변경도 감지 (필요시) -> deep: true 제거 (성능 이슈 방지)
+</script>
 
 <style scoped>
-.map-pattern {
+/* 기존 map-pattern 관련 스타일 제거 또는 필요에 따라 유지 */
+/* .map-pattern {
 	background-color: #e5e5f7;
 	opacity: 0.8;
 	background-image: linear-gradient(#d1d5db 1px, transparent 1px),
@@ -152,5 +342,63 @@
 	background-color: #1a1a1a;
 	background-image: linear-gradient(#333 1px, transparent 1px),
 		linear-gradient(to right, #333 1px, transparent 1px);
+} */
+</style>
+
+<style>
+.cluster-overlay {
+  background: rgba(41, 98, 255, 0.9);
+  color: #fff;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  line-height: 50px;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cluster-overlay:hover {
+  transform: scale(1.1);
+  background: rgba(41, 98, 255, 1);
+  z-index: 100;
+}
+
+.apartment-marker {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 6px 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s;
+  min-width: 80px;
+}
+.apartment-marker .apt-name {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+.apartment-marker .deal-count {
+  color: #2962ff;
+  font-weight: bold;
+}
+.apartment-marker:hover {
+  z-index: 100;
+  transform: scale(1.1);
+  background: #f8f9fa;
+  border-color: #2962ff;
 }
 </style>

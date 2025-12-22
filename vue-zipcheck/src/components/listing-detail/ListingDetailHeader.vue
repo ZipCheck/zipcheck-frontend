@@ -12,15 +12,15 @@
 						>매매</span
 					>
 					<span class="text-text-sub-light dark:text-text-sub-dark text-sm"
-						>등록일 2023.10.27</span
+						>등록일 {{ formattedDealDate }}</span
 					>
 				</div>
-				<h1 class="text-3xl font-bold mb-2">래미안 원베일리 108동</h1>
+				<h1 class="text-3xl font-bold mb-2">{{ property.aptName }}</h1>
 				<p
 					class="text-text-sub-light dark:text-text-sub-dark flex items-center gap-1"
 				>
 					<span class="material-symbols-outlined text-sm">location_on</span>
-					서울시 서초구 반포동
+					{{ property.roadNm }} (지번: {{ property.jibun }})
 				</p>
 			</div>
 			<div class="text-right md:text-right w-full md:w-auto">
@@ -28,41 +28,41 @@
 					매매가
 				</p>
 				<p class="text-4xl font-bold text-primary dark:text-yellow-400">
-					38억 5,000
+					{{ formattedDealAmount }}
 				</p>
-				<p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">
-					(평당 1.1억)
-				</p>
+				<!-- <p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">
+					(평당 1.1억) // API에 없음
+				</p> -->
 			</div>
 		</div>
 		<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
 			<div class="flex flex-col">
 				<span
 					class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-wider mb-1"
-					>공급/전용면적</span
+					>전용면적</span
 				>
-				<span class="font-semibold text-lg">112㎡ / 84㎡</span>
+				<span class="font-semibold text-lg">{{ property.excluUseAr }}㎡</span>
 			</div>
 			<div class="flex flex-col">
 				<span
 					class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-wider mb-1"
-					>해당층/총층</span
+					>해당층</span
 				>
-				<span class="font-semibold text-lg">15층 / 35층</span>
+				<span class="font-semibold text-lg">{{ property.floor }}층</span>
 			</div>
 			<div class="flex flex-col">
 				<span
 					class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-wider mb-1"
 					>방수/욕실수</span
 				>
-				<span class="font-semibold text-lg">3개 / 2개</span>
+				<span class="font-semibold text-lg">3개 / 2개</span> <!-- API에 없음 -->
 			</div>
 			<div class="flex flex-col">
 				<span
 					class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-wider mb-1"
-					>사용승인일</span
+					>건축년도</span
 				>
-				<span class="font-semibold text-lg">2023.08.31</span>
+				<span class="font-semibold text-lg">{{ property.buildYear }}</span>
 			</div>
 		</div>
 		<div class="mt-8 flex gap-3">
@@ -82,4 +82,40 @@
 	</section>
 </template>
 
-<script setup></script>
+<script setup>
+import { computed } from 'vue';
+
+const props = defineProps({
+	property: {
+		type: Object,
+		required: true,
+	},
+});
+
+const formattedDealDate = computed(() => {
+	if (!props.property) return '';
+	const { dealYear, dealMonth, dealDay } = props.property;
+	return `${dealYear}.${String(dealMonth).padStart(2, '0')}.${String(dealDay).padStart(2, '0')}`;
+});
+
+const formattedDealAmount = computed(() => {
+	if (!props.property || !props.property.dealAmount) return '';
+	// dealAmount가 "120,000" 형태의 문자열이라고 가정 (만원 단위)
+	const amountString = props.property.dealAmount.replace(/,/g, ''); // 콤마 제거
+	const amount = parseInt(amountString, 10);
+
+	if (isNaN(amount)) return props.property.dealAmount; // 숫자로 변환 실패 시 원본 반환
+
+	const billion = Math.floor(amount / 10000);
+	const million = amount % 10000;
+
+	let result = '';
+	if (billion > 0) {
+		result += `${billion}억 `;
+	}
+	if (million > 0) {
+		result += `${million.toLocaleString()}만원`;
+	}
+	return result.trim();
+});
+</script>
