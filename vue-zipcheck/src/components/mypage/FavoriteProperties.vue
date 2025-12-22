@@ -38,17 +38,6 @@
 						<button @click="handleRemoveFavorite(prop.dealNo)" class="text-red-500 hover:text-red-700 transition-colors">
 							<span class="material-symbols-outlined icon-filled">favorite</span>
 						</button>
-						<button @click="goToMap(prop)" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-							지도에서 보기
-						</button>
-						<div v-if="prop.hasSticker">
-							<span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">이모티콘 등록 완료</span>
-						</div>
-						<div v-else>
-							<button @click="goToMap(prop)" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-semibold hover:bg-blue-200 transition-colors">
-								이모티콘 등록하기
-							</button>
-						</div>
 					</div>
 				</div>
 			</div>
@@ -79,9 +68,9 @@ const fetchFavorites = async () => {
 	error.value = null;
 	try {
 		const response = await getFavoriteProperties(pagingInfo.value.page, pagingInfo.value.size);
-		if (response) {
-			properties.value = response.items || [];
-			pagingInfo.value.totalCount = response.totalCount || 0;
+		if (response && response.data) {
+			properties.value = response.data.items || [];
+			pagingInfo.value.totalCount = response.data.totalCount || 0;
 		} else {
 			properties.value = [];
 			pagingInfo.value.totalCount = 0;
@@ -112,11 +101,7 @@ const handleRemoveFavorite = async (dealNo) => {
 	}
 };
 
-const goToMap = (property) => {
-	// TODO: 지도 페이지로 좌표 전달하는 기능 구현 필요
-	// 예: router.push({ path: '/map', query: { lat: property.latitude, lng: property.longitude } });
-	router.push('/map');
-};
+
 
 onMounted(() => {
 	fetchFavorites();
