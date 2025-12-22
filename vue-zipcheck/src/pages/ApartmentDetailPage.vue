@@ -3,7 +3,6 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { getApartmentDeals } from '@/api/map.api.js';
-import { addFavoriteProperty, removeFavoriteProperty } from '@/api/users.api.js';
 import PropertyCard from '@/components/map/PropertyCard.vue';
 import AiReport from '@/components/listing-detail/AiReport.vue';
 import ToastMessage from '@/components/common/ToastMessage.vue';
@@ -12,7 +11,6 @@ const route = useRoute();
 const deals = ref([]);
 const loading = ref(true);
 const error = ref(null);
-const isFavorited = ref(false); // 찜 상태 (초기값은 API 연동 후 변경 필요)
 
 // Toast state
 const showToast = ref(false);
@@ -43,7 +41,6 @@ const fetchDeals = async (page = 1) => {
         
         if (response && response.data) {
             deals.value = response.data;
-            // TODO: 실제 찜 상태를 API로부터 받아와 isFavorited.value에 설정해야 함
             pagingInfo.value = {
                 currentPage: response.currentPage || 1,
                 totalPages: response.totalPages || 1,
@@ -60,30 +57,6 @@ const fetchDeals = async (page = 1) => {
         loading.value = false;
     }
 };
-
-const toggleFavorite = async () => {
-    const dealNo = deals.value[0]?.no; // 대표 매물로 가정
-    if (!dealNo) return;
-
-    try {
-        if (isFavorited.value) {
-            await removeFavoriteProperty(dealNo);
-            toastMessage.value = '찜 목록에서 제거되었습니다.';
-        } else {
-            await addFavoriteProperty(dealNo);
-            toastMessage.value = '찜 목록에 추가되었습니다.';
-        }
-        isFavorited.value = !isFavorited.value;
-        toastType.value = 'success';
-        showToast.value = true;
-    } catch (err) {
-        console.error('Failed to toggle favorite:', err);
-        toastMessage.value = '요청에 실패했습니다.';
-        toastType.value = 'error';
-        showToast.value = true;
-    }
-};
-
 
 const changePage = (page) => {
     if (page < 1 || page > pagingInfo.value.totalPages) return;
@@ -121,14 +94,6 @@ onMounted(() => {
                     <h1 class="text-3xl font-bold text-gray-900">{{ aptName }}</h1>
                     <span class="text-gray-500 mb-1.5">총 <span class="text-primary font-bold">{{ pagingInfo.totalCount || deals.length }}</span>건의 매물</span>
                 </div>
-                <button @click="toggleFavorite" class="p-3 rounded-full hover:bg-gray-100 transition-colors">
-                    <span 
-                        class="material-symbols-outlined"
-                        :class="isFavorited ? 'text-red-500 icon-filled' : 'text-gray-400'"
-                    >
-                        favorite
-                    </span>
-                </button>
             </div>
         </div>
 
@@ -144,7 +109,7 @@ onMounted(() => {
                         <PropertyCard 
                             v-for="deal in deals" 
                             :key="deal.no" 
-                            :property="deal"
+                            :property="{ ...deal, isFavorite: deal.isFavorite || false }"
                         />
                     </div>
 
@@ -179,6 +144,6 @@ onMounted(() => {
             </div>
         </div>
     </div>
-    <ToastMessage v-model:show="showToast" :message="toastMessage" :type="toastType" />
-  </main>
+</main>
+<ToastMessage v-model:show="showToast" :message="toastMessage" :type="toastType" />
 </template>

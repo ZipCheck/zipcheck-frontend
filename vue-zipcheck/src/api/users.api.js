@@ -65,7 +65,7 @@ export const removeFavoriteProperty = (dealNo) => {
  * @returns {Promise<any>}
  */
 export const addFavoriteProperty = (dealNo) => {
-    return http.post('/api/interests', { dealNo });
+    return http.post(`/api/interests/${dealNo}`);
 };
 
 

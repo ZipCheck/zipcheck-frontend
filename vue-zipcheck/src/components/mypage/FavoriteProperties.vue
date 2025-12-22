@@ -79,8 +79,13 @@ const fetchFavorites = async () => {
 	error.value = null;
 	try {
 		const response = await getFavoriteProperties(pagingInfo.value.page, pagingInfo.value.size);
-		properties.value = response.items;
-		pagingInfo.value.totalCount = response.totalCount;
+		if (response) {
+			properties.value = response.items || [];
+			pagingInfo.value.totalCount = response.totalCount || 0;
+		} else {
+			properties.value = [];
+			pagingInfo.value.totalCount = 0;
+		}
 	} catch (err) {
 		console.error('Failed to fetch favorite properties:', err);
 		error.value = '찜한 매물 목록을 불러오는 데 실패했습니다.';
