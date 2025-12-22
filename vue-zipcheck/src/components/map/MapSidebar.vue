@@ -126,6 +126,7 @@
                 <div 
                     v-for="(apt, index) in properties" 
                     :key="apt.aptSeq || index"
+                    @click="openReviewModal(apt)"
                     class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                 >
                     <div class="flex justify-between items-center mb-1">
@@ -170,12 +171,21 @@
                 <span class="material-symbols-outlined text-sm">chevron_right</span>
             </button>
         </div>
+
+    <PropertyReviewModal 
+        :isOpen="isReviewModalOpen"
+        :apartmentName="selectedReviewProperty?.aptName"
+        :apartmentId="selectedReviewProperty?.aptSeq"
+        @close="isReviewModalOpen = false"
+        @save="handleReviewSave"
+    />
 	</aside>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import PropertyCard from '@/components/map/PropertyCard.vue';
+import PropertyReviewModal from '@/components/map/PropertyReviewModal.vue';
 
 const props = defineProps({
 	sidoList: Array,
@@ -211,15 +221,28 @@ const emit = defineEmits([
 ]);
 
 const showFilterPanel = ref(false);
+const isReviewModalOpen = ref(false);
+const selectedReviewProperty = ref(null);
 
 const toggleFilterPanel = () => {
     showFilterPanel.value = !showFilterPanel.value;
 };
 
+const openReviewModal = (apt) => {
+    selectedReviewProperty.value = apt;
+    isReviewModalOpen.value = true;
+};
+
+const handleReviewSave = (reviewData) => {
+    console.log('Review saved:', reviewData);
+    // TODO: API call to save review
+    isReviewModalOpen.value = false;
+};
+
 // 선택된 매물이 있으면 해당 매물만 필터링, 없으면 전체 보여줌
 const filteredProperties = computed(() => {
     if (props.selectedPropertyId) {
-filteredProperties.filter(p => (p.deal_id || p.no) == props.selectedPropertyId);
+        return props.properties.filter(p => (p.deal_id || p.no) == props.selectedPropertyId);
     }
     return props.properties;
 });
