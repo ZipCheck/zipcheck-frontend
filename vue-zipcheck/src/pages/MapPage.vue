@@ -1,7 +1,6 @@
 <template>
 	<main class="flex-grow flex relative h-[calc(100vh-64px)] overflow-hidden">
 		<MapSidebar
-			@search-properties="searchMapProperties"
 			:sidoList="sidoList"
 			:gugunList="gugunList"
 			:dongList="dongList"
@@ -14,6 +13,7 @@
 			:minArea="minArea"
 			:maxArea="maxArea"
 			:properties="properties"
+            :pagingInfo="pagingInfo"
 			:loading="loading"
 			:error="error"
             :selectedPropertyId="selectedPropertyId"
@@ -25,21 +25,25 @@
 			@update:maxPrice="updateMaxPrice"
 			@update:minArea="updateMinArea"
 			@update:maxArea="updateMaxArea"
+            @search-properties="searchMapProperties"
+            @change-page="handlePageChange"
             @reset-selection="resetSelection"
 		/>
-		<KakaoMap 
-            :properties="properties" 
-            @select-property="handlePropertySelect"
-        />
-	</main>
+				<KakaoMap
+		            :properties="properties"
+		            @select-property="handlePropertySelect"
+		            @update:map-viewport="handleMapViewportUpdate"
+		        />	</main>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import MapSidebar from '@/components/map/MapSidebar.vue';
 import KakaoMap from '@/components/map/KakaoMap.vue';
 import { getSido, getGugun, getDong, searchProperties } from '@/api/map.api.js';
 
+const router = useRouter();
 const properties = ref([]);
 const loading = ref(false);
 const error = ref(null);
@@ -62,6 +66,15 @@ const minPrice = ref(null);
 const maxPrice = ref(null);
 const minArea = ref(null);
 const maxArea = ref(null);
+
+// 현재 지도 뷰포트 정보
+const currentViewport = ref({
+    minLatitude: null,
+    maxLatitude: null,
+    minLongitude: null,
+    maxLongitude: null,
+    zoomLevel: null,
+});
 
 
 // 시/도 목록 가져오기
@@ -103,8 +116,15 @@ const fetchDongList = async (sido, gugun) => {
 	}
 };
 
+// 페이징 정보
+const pagingInfo = ref({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0
+});
+
 // 매물 검색 함수
-const searchMapProperties = async () => {
+const searchMapProperties = async (params = {}) => {
 	loading.value = true;
 	error.value = null;
     selectedPropertyId.value = null; // 검색 시 선택 초기화
@@ -118,10 +138,28 @@ const searchMapProperties = async () => {
 			maxArea: maxArea.value || null,
 			minPrice: minPrice.value || null,
 			maxPrice: maxPrice.value || null,
-			page: 1, 
+            minLatitude: currentViewport.value.minLatitude || null,
+            maxLatitude: currentViewport.value.maxLatitude || null,
+            minLongitude: currentViewport.value.minLongitude || null,
+            maxLongitude: currentViewport.value.maxLongitude || null,
+            zoomLevel: currentViewport.value.zoomLevel || null,
+			page: params.page || 1, // 파라미터로 받은 페이지 사용, 기본값 1
 			size: 20, // 기본값 20으로 복구
 		};
-		properties.value = await searchProperties(searchParams);
+		const response = await searchProperties(searchParams);
+        if (response && response.data) {
+            properties.value = response.data;
+            // 페이징 정보 업데이트
+            pagingInfo.value = {
+                currentPage: response.currentPage || 1,
+                totalPages: response.totalPages || 1,
+                totalCount: response.totalCount || 0
+            };
+            console.log('MapPage: Paging Info Updated:', pagingInfo.value);
+        } else {
+            properties.value = [];
+            pagingInfo.value = { currentPage: 1, totalPages: 1, totalCount: 0 };
+        }
 	} catch (err) {
 		console.error('Failed to search properties:', err);
 		error.value = err;
@@ -130,10 +168,17 @@ const searchMapProperties = async () => {
 	}
 };
 
+const handlePageChange = (page) => {
+    searchMapProperties({ page });
+};
+
 // 마커 클릭 시 호출되는 함수
 const handlePropertySelect = (propertyId) => {
     console.log('MapPage: Property selected (from KakaoMap), ID:', propertyId);
-    selectedPropertyId.value = propertyId;
+    if (propertyId) {
+        // 아파트 상세 페이지로 이동
+        router.push(`/apartment/${propertyId}`);
+    }
 };
 
 // 선택 초기화 (전체 목록 보기)
@@ -171,6 +216,20 @@ const updateMaxPrice = (value) => (maxPrice.value = value);
 const updateMinArea = (value) => (minArea.value = value);
 const updateMaxArea = (value) => (maxArea.value = value);
 
+// 초기 로딩 시 자동 검색 방지 플래그
+const isInitialLoad = ref(true);
+
+const handleMapViewportUpdate = (viewport) => {
+    currentViewport.value = viewport;
+    
+    // 초기 로딩 시에는 검색을 수행하지 않음
+    if (isInitialLoad.value) {
+        isInitialLoad.value = false;
+        return;
+    }
+
+    searchMapProperties(); // Trigger search with new viewport
+};
 
 // 초기 로드 시 시/도 목록 및 매물 검색
 onMounted(() => {
