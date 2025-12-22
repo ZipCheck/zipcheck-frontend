@@ -172,13 +172,16 @@
             </button>
         </div>
 
-    <PropertyReviewModal 
-        :isOpen="isReviewModalOpen"
-        :apartmentName="selectedReviewProperty?.aptName"
-        :apartmentId="selectedReviewProperty?.aptSeq"
-        @close="isReviewModalOpen = false"
-        @save="handleReviewSave"
-    />
+    <Teleport to="body">
+        <PropertyReviewModal 
+            v-if="isReviewModalOpen"
+            :isOpen="isReviewModalOpen"
+            :apartmentName="selectedReviewProperty?.aptName"
+            :apartmentId="selectedReviewProperty?.aptSeq"
+            @close="isReviewModalOpen = false"
+            @save="handleReviewSave"
+        />
+    </Teleport>
 	</aside>
 </template>
 
