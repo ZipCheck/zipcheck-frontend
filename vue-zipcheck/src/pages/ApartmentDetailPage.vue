@@ -5,6 +5,7 @@ import { getApartmentDeals } from '@/api/map.api.js';
 import PropertyCard from '@/components/map/PropertyCard.vue';
 import AiReport from '@/components/listing-detail/AiReport.vue';
 import ToastMessage from '@/components/common/ToastMessage.vue';
+import DealHistoryChart from '@/components/listing-detail/DealHistoryChart.vue';
 
 const route = useRoute();
 const deals = ref([]);
@@ -16,17 +17,16 @@ const showToast = ref(false);
 const toastMessage = ref('');
 const toastType = ref('info');
 
-const pagingInfo = ref({
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0
-});
+const paginatedDeals = ref([]);
+const currentPage = ref(1);
+const dealsPerPage = 10;
+const totalPages = computed(() => Math.ceil(deals.value.length / dealsPerPage));
 
 const aptName = computed(() => {
     return deals.value.length > 0 ? deals.value[0].aptName : '아파트 상세 정보';
 });
 
-const fetchDeals = async (page = 1) => {
+const fetchDeals = async () => {
     const aptSeq = route.params.aptSeq;
     if (!aptSeq) {
         error.value = new Error('아파트 정보가 없습니다.');
@@ -36,15 +36,12 @@ const fetchDeals = async (page = 1) => {
 
     loading.value = true;
     try {
-        const response = await getApartmentDeals(aptSeq, page);
+        // size를 200으로 설정하여 모든 매물 데이터를 가져오도록 요청
+        const response = await getApartmentDeals(aptSeq, 1, 200);
         
         if (response && response.data) {
             deals.value = response.data;
-            pagingInfo.value = {
-                currentPage: response.currentPage,
-                totalPages: response.totalPages,
-                totalCount: response.totalCount
-            };
+            updatePaginatedDeals();
         } else {
             deals.value = [];
         }
@@ -56,9 +53,16 @@ const fetchDeals = async (page = 1) => {
     }
 };
 
+const updatePaginatedDeals = () => {
+  const start = (currentPage.value - 1) * dealsPerPage;
+  const end = start + dealsPerPage;
+  paginatedDeals.value = deals.value.slice(start, end);
+};
+
 const changePage = (page) => {
-    if (page < 1 || page > pagingInfo.value.totalPages) return;
-    fetchDeals(page);
+    if (page < 1 || page > totalPages.value) return;
+    currentPage.value = page;
+    updatePaginatedDeals();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -90,9 +94,15 @@ onMounted(() => {
             <div class="flex items-center justify-between">
                 <div class="flex items-end gap-3">
                     <h1 class="text-3xl font-bold text-gray-900">{{ aptName }}</h1>
-                    <span class="text-gray-500 mb-1.5">총 <span class="text-primary font-bold">{{ pagingInfo.totalCount || deals.length }}</span>건의 매물</span>
+                    <span class="text-gray-500 mb-1.5">총 <span class="text-primary font-bold">{{ deals.length }}</span>건의 매물</span>
                 </div>
             </div>
+        </div>
+
+        <!-- 차트 영역 -->
+        <div v-if="deals.length > 1" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <DealHistoryChart :deals="deals" chartType="price" />
+            <DealHistoryChart :deals="deals" chartType="pricePerArea" />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -105,29 +115,29 @@ onMounted(() => {
                 <div v-else class="flex flex-col gap-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <PropertyCard 
-                            v-for="deal in deals" 
+                            v-for="deal in paginatedDeals" 
                             :key="deal.no" 
                             :property="deal"
                         />
                     </div>
 
                     <!-- 페이지네이션 -->
-                    <div v-if="pagingInfo.totalPages > 1" class="flex justify-center items-center gap-4 pt-6 border-t border-gray-200">
+                    <div v-if="totalPages > 1" class="flex justify-center items-center gap-4 pt-6 border-t border-gray-200">
                         <button 
-                            @click="changePage(pagingInfo.currentPage - 1)" 
-                            :disabled="pagingInfo.currentPage <= 1"
+                            @click="changePage(currentPage - 1)" 
+                            :disabled="currentPage <= 1"
                             class="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                             <span class="material-symbols-outlined">chevron_left</span>
                         </button>
                         
                         <span class="font-medium text-gray-700">
-                            {{ pagingInfo.currentPage }} / {{ pagingInfo.totalPages }}
+                            {{ currentPage }} / {{ totalPages }}
                         </span>
 
                         <button 
-                            @click="changePage(pagingInfo.currentPage + 1)" 
-                            :disabled="pagingInfo.currentPage >= pagingInfo.totalPages"
+                            @click="changePage(currentPage + 1)" 
+                            :disabled="currentPage >= totalPages"
                             class="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                             <span class="material-symbols-outlined">chevron_right</span>
