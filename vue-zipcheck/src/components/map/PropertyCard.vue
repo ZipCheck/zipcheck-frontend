@@ -12,7 +12,7 @@
 			<button @click.stop="toggleFavorite" class="p-1 -m-1">
 				<span
 					class="material-symbols-outlined transition-colors text-[20px]"
-					:class="isFavorited ? 'text-red-500 icon-filled' : 'text-gray-300 group-hover:text-red-400'"
+					:class="property.isFavorite ? 'text-red-500 icon-filled' : 'text-gray-300 group-hover:text-red-400'"
 				>
 					favorite
 				</span>
@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { addFavoriteProperty, removeFavoriteProperty } from '@/api/users.api.js';
 import { isAuthenticated } from '@/stores/auth.store.js';
@@ -49,7 +49,6 @@ const props = defineProps({
 });
 
 const router = useRouter();
-const isFavorited = ref(props.property.isFavorite);
 
 const goToDetail = () => {
 	const aptSeq = props.property.aptSeq;
@@ -68,12 +67,14 @@ const toggleFavorite = async () => {
 	if (!dealNo) return;
 
 	try {
-		if (isFavorited.value) {
+		if (props.property.isFavorite) {
 			await removeFavoriteProperty(dealNo);
 		} else {
 			await addFavoriteProperty(dealNo);
 		}
-		isFavorited.value = !isFavorited.value;
+		// Optimistic update of the prop.
+		// This works because the parent's data is now correctly fetched and reactive.
+		props.property.isFavorite = !props.property.isFavorite;
 	} catch (error) {
 		console.error("Failed to toggle favorite status:", error);
 		// Optionally, revert the state on error
