@@ -3,6 +3,8 @@
 		<EmoticonSidebar :totalCount="totalReviewCount" />
 		<EmoticonMap
 			:stickers="stickers"
+			:user-position="userPosition"
+			:initial-zoom="initialZoom"
 			@update:map-viewport="handleViewportUpdate"
 			@select-apartment="handleApartmentSelect"
 		/>
@@ -10,18 +12,52 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import EmoticonSidebar from '@/components/map-emoticon/EmoticonSidebar.vue';
 import EmoticonMap from '@/components/map-emoticon/EmoticonMap.vue';
 import { getStickerMap } from '@/api/stickers.api.js';
+import { useMapStore } from '@/stores/map.store';
 
 const router = useRouter();
+const mapStore = useMapStore();
 const stickers = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const userPosition = ref(null);
+const initialZoom = ref(7); // 기본 줌 레벨
 
 let fetchTimer = null;
+
+onMounted(() => {
+	// Pinia store에 저장된 viewport 상태가 있는지 확인
+	if (mapStore.hasBeenSet) {
+		userPosition.value = {
+			lat: mapStore.latitude,
+			lng: mapStore.longitude,
+		};
+		initialZoom.value = mapStore.zoom;
+	} else {
+		// Geolocation API로 현재 위치 가져오기
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(
+				position => {
+					userPosition.value = {
+						lat: position.coords.latitude,
+						lng: position.coords.longitude,
+					};
+					initialZoom.value = 10; // 현재 위치를 찾았을 때 더 가까운 줌 레벨 설정
+					console.log('현재 위치:', userPosition.value);
+				},
+				err => {
+					console.error('Geolocation 에러:', err);
+				},
+			);
+		} else {
+			console.warn('이 브라우저에서는 위치 정보 서비스를 지원하지 않습니다.');
+		}
+	}
+});
 
 const fetchStickerMap = async viewport => {
 	loading.value = true;

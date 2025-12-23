@@ -23,6 +23,14 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	userPosition: {
+		type: Object,
+		default: null,
+	},
+	initialZoom: {
+		type: Number,
+		default: 7,
+	},
 });
 
 const emit = defineEmits(['update:map-viewport', 'select-apartment']);
@@ -37,9 +45,13 @@ const CLUSTER_THRESHOLD_LEVEL = 6;
 
 const initMap = () => {
 	const container = document.getElementById('emoticon-map');
+	const initialCenter = props.userPosition
+		? new window.kakao.maps.LatLng(props.userPosition.lat, props.userPosition.lng)
+		: new window.kakao.maps.LatLng(37.566826, 126.9786567);
+
 	const options = {
-		center: new window.kakao.maps.LatLng(37.566826, 126.9786567),
-		level: 4,
+		center: initialCenter,
+		level: props.initialZoom,
 	};
 
 	map.value = new window.kakao.maps.Map(container, options);
@@ -55,6 +67,20 @@ const initMap = () => {
 	emitMapViewport();
 	updateRender(props.stickers);
 };
+
+// userPosition prop이 변경되면 지도의 중심을 부드럽게 이동
+watch(
+	() => props.userPosition,
+	newPosition => {
+		if (newPosition && map.value) {
+			const center = new window.kakao.maps.LatLng(
+				newPosition.lat,
+				newPosition.lng,
+			);
+			map.value.panTo(center);
+		}
+	},
+);
 
 onMounted(async () => {
 	try {

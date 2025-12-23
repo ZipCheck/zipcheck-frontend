@@ -65,8 +65,10 @@ import {
 	searchProperties,
 	addEmoticon,
 } from '@/api/map.api.js';
+import { useMapStore } from '@/stores/map.store';
 
 const router = useRouter();
+const mapStore = useMapStore();
 
 // --- 매물 관련 상태 ---
 const properties = ref([]);
@@ -216,6 +218,16 @@ const updateMinArea = value => (minArea.value = value);
 const updateMaxArea = value => (maxArea.value = value);
 const handleMapViewportUpdate = viewport => {
 	currentViewport.value = viewport;
+	
+	// 지도 상태를 Pinia store에 저장
+	if (viewport.centerLat && viewport.centerLng && viewport.zoomLevel) {
+		mapStore.setViewport({
+			lat: viewport.centerLat,
+			lng: viewport.centerLng,
+			zoom: viewport.zoomLevel,
+		});
+	}
+
 	if (isInitialLoad.value) {
 		isInitialLoad.value = false;
 		return;
