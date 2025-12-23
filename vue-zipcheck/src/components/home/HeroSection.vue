@@ -35,10 +35,14 @@
 						class="w-full h-full bg-transparent border-none focus:ring-0 text-lg px-4 placeholder:text-gray-400 text-text-main"
 						placeholder="아파트 / 단지명 / 지역 / 게시글 검색"
 						type="text"
+						v-model="searchQuery"
+						@keyup.enter="handleSearch"
 					/>
 					<div class="pr-2">
 						<button
 							class="h-12 px-8 bg-primary hover:bg-primary-dark rounded-full font-bold text-text-main transition-colors text-base whitespace-nowrap"
+							type="button"
+							@click="handleSearch"
 						>
 							검색
 						</button>
@@ -62,4 +66,19 @@
 	</section>
 </template>
 
-<script setup></script>
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const searchQuery = ref('');
+
+const handleSearch = () => {
+	const query = searchQuery.value.trim();
+	if (query) {
+		router.push({ path: '/map', query: { q: query } });
+		return;
+	}
+	router.push('/map');
+};
+</script>
