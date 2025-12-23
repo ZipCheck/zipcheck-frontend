@@ -51,9 +51,9 @@ const props = defineProps({
 const router = useRouter();
 
 const goToDetail = () => {
-	const aptSeq = props.property.aptSeq;
-	if (aptSeq) {
-		router.push(`/apartment/${aptSeq}`);
+	const dealNo = props.property.no;
+	if (dealNo) {
+		router.push(`/listing/${dealNo}`);
 	}
 };
 
