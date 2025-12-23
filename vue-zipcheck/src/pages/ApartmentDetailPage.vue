@@ -1,4 +1,3 @@
-
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
@@ -42,13 +41,12 @@ const fetchDeals = async (page = 1) => {
         if (response && response.data) {
             deals.value = response.data;
             pagingInfo.value = {
-                currentPage: response.currentPage || 1,
-                totalPages: response.totalPages || 1,
-                totalCount: response.totalCount || 0
+                currentPage: response.currentPage,
+                totalPages: response.totalPages,
+                totalCount: response.totalCount
             };
-        } else if (Array.isArray(response)) {
-            deals.value = response;
-            pagingInfo.value = { currentPage: 1, totalPages: 1, totalCount: response.length };
+        } else {
+            deals.value = [];
         }
     } catch (err) {
         console.error('Failed to fetch apartment deals:', err);
@@ -109,7 +107,7 @@ onMounted(() => {
                         <PropertyCard 
                             v-for="deal in deals" 
                             :key="deal.no" 
-                            :property="{ ...deal, isFavorite: deal.isFavorite || false }"
+                            :property="deal"
                         />
                     </div>
 

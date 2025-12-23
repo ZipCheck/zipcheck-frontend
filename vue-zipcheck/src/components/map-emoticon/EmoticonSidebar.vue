@@ -3,7 +3,7 @@
 		class="absolute top-4 left-4 bottom-4 z-20 w-80 flex flex-col gap-4 pointer-events-none"
 	>
 		<div
-			class="bg-surface-light dark:bg-surface-dark p-2 rounded-2xl shadow-soft pointer-events-auto border border-gray-100 dark:border-gray-700"
+			class="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-2 rounded-2xl shadow-soft pointer-events-auto border border-gray-200/70 dark:border-gray-700/70"
 		>
 			<div class="relative group">
 				<span
@@ -23,7 +23,7 @@
 			</div>
 		</div>
 		<div
-			class="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl shadow-soft pointer-events-auto border border-gray-100 dark:border-gray-700 flex-1 flex flex-col overflow-y-auto"
+			class="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md p-5 rounded-2xl shadow-soft pointer-events-auto border border-gray-200/70 dark:border-gray-700/70 flex-1 flex flex-col overflow-y-auto"
 		>
 			<div class="flex items-center gap-2 mb-4">
 				<div
@@ -106,11 +106,28 @@
 					<span class="text-xs text-gray-400 block mb-1"
 						>이번 달 등록된 리뷰</span
 					>
-					<span class="text-xl font-bold text-primary">1,248개</span>
+					<span class="text-xl font-bold text-primary"
+						>{{ formattedCount }}개</span
+					>
 				</div>
 			</div>
 		</div>
 	</aside>
 </template>
 
-<script setup></script>
+<script setup>
+import { computed } from 'vue';
+
+const props = defineProps({
+	totalCount: {
+		type: Number,
+		default: 0,
+	},
+});
+
+const formattedCount = computed(() => {
+	const value = Number(props.totalCount);
+	if (!Number.isFinite(value)) return '0';
+	return value.toLocaleString('ko-KR');
+});
+</script>

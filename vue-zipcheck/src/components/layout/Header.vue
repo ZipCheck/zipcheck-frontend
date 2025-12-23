@@ -79,8 +79,7 @@ const linkRefs = ref({});
 
 const links = [
 	{ to: '/', text: '홈', match: ['/'] },
-	{ to: '/map', text: '매물 지도', match: ['/map'] },
-	{ to: '/map-emoticon', text: '감정 지도', match: ['/map-emoticon'] },
+	{ to: '/map', text: '지도', match: ['/map'] },
 	{ to: '/boards', text: '게시판', match: ['/boards'] },
 	{ to: '/notices', text: '공지사항', match: ['/notices'] },
 ];

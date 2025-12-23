@@ -13,10 +13,10 @@
 			:minArea="minArea"
 			:maxArea="maxArea"
 			:properties="properties"
-            :pagingInfo="pagingInfo"
+			:pagingInfo="pagingInfo"
 			:loading="loading"
 			:error="error"
-            :selectedPropertyId="selectedPropertyId"
+			:selectedPropertyId="selectedPropertyId"
 			@update:selectedSido="updateSelectedSido"
 			@update:selectedGugun="updateSelectedGugun"
 			@update:selectedDong="updateSelectedDong"
@@ -25,15 +25,29 @@
 			@update:maxPrice="updateMaxPrice"
 			@update:minArea="updateMinArea"
 			@update:maxArea="updateMaxArea"
-            @search-properties="searchMapProperties"
-            @change-page="handlePageChange"
-            @reset-selection="resetSelection"
+			@search-properties="searchMapProperties"
+			@change-page="handlePageChange"
+			@reset-selection="resetSelection"
 		/>
-				<KakaoMap
-		            :properties="properties"
-		            @select-property="handlePropertySelect"
-		            @update:map-viewport="handleMapViewportUpdate"
-		        />	</main>
+		<KakaoMap
+			:properties="properties"
+			@select-property="handlePropertySelect"
+			@update:map-viewport="handleMapViewportUpdate"
+			@map-click="handleMapClick"
+			:user-position="currentUserPosition"
+		/>
+		<ToastMessage
+			v-model:show="showToast"
+			:message="toastMessage"
+			:type="toastType"
+		/>
+		<EmoticonSelectionModal
+			:show="showEmoticonModal"
+			:distance="currentDistance"
+			@close="showEmoticonModal = false"
+			@select="handleEmoticonSelect"
+		/>
+	</main>
 </template>
 
 <script setup>
@@ -41,56 +55,68 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MapSidebar from '@/components/map/MapSidebar.vue';
 import KakaoMap from '@/components/map/KakaoMap.vue';
-import { getSido, getGugun, getDong, searchProperties } from '@/api/map.api.js';
+import ToastMessage from '@/components/common/ToastMessage.vue';
+import EmoticonSelectionModal from '@/components/map-emoticon/EmoticonSelectionModal.vue';
+import { calculateDistance } from '@/utils/geolocation.js';
+import {
+	getSido,
+	getGugun,
+	getDong,
+	searchProperties,
+	addEmoticon,
+} from '@/api/map.api.js';
 
 const router = useRouter();
+
+// --- 매물 관련 상태 ---
 const properties = ref([]);
 const loading = ref(false);
 const error = ref(null);
-
-// 선택된 매물 ID (단일 선택)
 const selectedPropertyId = ref(null);
-
-// 지역 검색 관련 상태
 const sidoList = ref([]);
 const gugunList = ref([]);
 const dongList = ref([]);
-
 const selectedSido = ref('');
 const selectedGugun = ref('');
 const selectedDong = ref('');
 const aptNameSearch = ref('');
-
-// 필터 관련 상태
 const minPrice = ref(null);
 const maxPrice = ref(null);
 const minArea = ref(null);
 const maxArea = ref(null);
-
-// 현재 지도 뷰포트 정보
 const currentViewport = ref({
-    minLatitude: null,
-    maxLatitude: null,
-    minLongitude: null,
-    maxLongitude: null,
-    zoomLevel: null,
+	minLatitude: null,
+	maxLatitude: null,
+	minLongitude: null,
+	maxLongitude: null,
+	zoomLevel: null,
 });
+const pagingInfo = ref({
+	currentPage: 1,
+	totalPages: 1,
+	totalCount: 0,
+});
+const isInitialLoad = ref(true);
 
+// --- 이모티콘 및 위치 인증 관련 상태 ---
+const currentUserPosition = ref(null);
+const clickedMapPosition = ref(null);
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('info');
+const showEmoticonModal = ref(false);
+const currentDistance = ref(0);
 
-// 시/도 목록 가져오기
+// --- 매물 관련 메소드 ---
 const fetchSidoList = async () => {
-    console.log('MapPage: fetchSidoList called');
 	try {
 		sidoList.value = await getSido();
-        console.log('MapPage: fetchSidoList success, data:', sidoList.value);
 	} catch (err) {
 		console.error('Failed to fetch sido list:', err);
 		error.value = err;
 	}
 };
-
-// 구/군 목록 가져오기
-const fetchGugunList = async (sido) => {
+const fetchGugunList = async sido => {
 	gugunList.value = [];
 	dongList.value = [];
 	if (sido) {
@@ -102,8 +128,6 @@ const fetchGugunList = async (sido) => {
 		}
 	}
 };
-
-// 동 목록 가져오기
 const fetchDongList = async (sido, gugun) => {
 	dongList.value = [];
 	if (sido && gugun) {
@@ -115,19 +139,10 @@ const fetchDongList = async (sido, gugun) => {
 		}
 	}
 };
-
-// 페이징 정보
-const pagingInfo = ref({
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0
-});
-
-// 매물 검색 함수
 const searchMapProperties = async (params = {}) => {
 	loading.value = true;
 	error.value = null;
-    selectedPropertyId.value = null; // 검색 시 선택 초기화
+	selectedPropertyId.value = null;
 	try {
 		const searchParams = {
 			sidoName: selectedSido.value || null,
@@ -138,27 +153,25 @@ const searchMapProperties = async (params = {}) => {
 			maxArea: maxArea.value || null,
 			minPrice: minPrice.value || null,
 			maxPrice: maxPrice.value || null,
-            minLatitude: currentViewport.value.minLatitude || null,
-            maxLatitude: currentViewport.value.maxLatitude || null,
-            minLongitude: currentViewport.value.minLongitude || null,
-            maxLongitude: currentViewport.value.maxLongitude || null,
-            zoomLevel: currentViewport.value.zoomLevel || null,
-			page: params.page || 1, // 파라미터로 받은 페이지 사용, 기본값 1
-			size: 20, // 기본값 20으로 복구
+			minLatitude: currentViewport.value.minLatitude || null,
+			maxLatitude: currentViewport.value.maxLatitude || null,
+			minLongitude: currentViewport.value.minLongitude || null,
+			maxLongitude: currentViewport.value.maxLongitude || null,
+			zoomLevel: currentViewport.value.zoomLevel || null,
+			page: params.page || 1,
+			size: 20,
 		};
 		const response = await searchProperties(searchParams);
-        // API 응답 구조 변경에 따라 실제 데이터 배열을 올바르게 할당합니다.
-        properties.value = response.data || response;
-
-        // 페이징 정보가 응답에 포함된 경우 업데이트합니다.
-        if (response && response.currentPage !== undefined) {
-            pagingInfo.value = {
-                currentPage: response.currentPage,
-                totalPages: response.totalPages,
-                totalCount: response.totalCount
-            };
-            console.log('MapPage: Paging Info Updated:', pagingInfo.value);
-        }
+		if (response && response.data) {
+			properties.value = response.data;
+			pagingInfo.value = {
+				currentPage: response.currentPage,
+				totalPages: response.totalPages,
+				totalCount: response.totalCount,
+			};
+		} else {
+			properties.value = [];
+		}
 	} catch (err) {
 		console.error('Failed to search properties:', err);
 		error.value = err;
@@ -166,72 +179,129 @@ const searchMapProperties = async (params = {}) => {
 		loading.value = false;
 	}
 };
-
-const handlePageChange = (page) => {
-    searchMapProperties({ page });
+const handlePageChange = page => {
+	searchMapProperties({ page });
 };
-
-// 마커 클릭 시 호출되는 함수
-const handlePropertySelect = (propertyId) => {
-    console.log('MapPage: Property selected (from KakaoMap), ID:', propertyId);
-    if (propertyId) {
-        // 아파트 상세 페이지로 이동
-        router.push(`/apartment/${propertyId}`);
-    }
+const handlePropertySelect = propertyId => {
+	if (propertyId) {
+		router.push(`/apartment/${propertyId}`);
+	}
 };
-
-// 선택 초기화 (전체 목록 보기)
 const resetSelection = () => {
-    selectedPropertyId.value = null;
+	selectedPropertyId.value = null;
 };
-
-// MapSidebar에서 emit된 값 업데이트
-const updateSelectedSido = (value) => {
+const updateSelectedSido = value => {
 	selectedSido.value = value;
-	selectedGugun.value = ''; // 시도 변경 시 구군 초기화
-	selectedDong.value = ''; // 시도 변경 시 동 초기화
+	selectedGugun.value = '';
+	selectedDong.value = '';
 	fetchGugunList(value);
 	searchMapProperties();
 };
-
-const updateSelectedGugun = (value) => {
+const updateSelectedGugun = value => {
 	selectedGugun.value = value;
-	selectedDong.value = ''; // 구군 변경 시 동 초기화
+	selectedDong.value = '';
 	fetchDongList(selectedSido.value, value);
 	searchMapProperties();
 };
-
-const updateSelectedDong = (value) => {
+const updateSelectedDong = value => {
 	selectedDong.value = value;
 	searchMapProperties();
 };
-
-const updateAptNameSearch = (value) => {
+const updateAptNameSearch = value => {
 	aptNameSearch.value = value;
 };
-
-const updateMinPrice = (value) => (minPrice.value = value);
-const updateMaxPrice = (value) => (maxPrice.value = value);
-const updateMinArea = (value) => (minArea.value = value);
-const updateMaxArea = (value) => (maxArea.value = value);
-
-// 초기 로딩 시 자동 검색 방지 플래그
-const isInitialLoad = ref(true);
-
-const handleMapViewportUpdate = (viewport) => {
-    currentViewport.value = viewport;
-    
-    // 초기 로딩 시에는 검색을 수행하지 않음
-    if (isInitialLoad.value) {
-        isInitialLoad.value = false;
-        return;
-    }
-
-    searchMapProperties(); // Trigger search with new viewport
+const updateMinPrice = value => (minPrice.value = value);
+const updateMaxPrice = value => (maxPrice.value = value);
+const updateMinArea = value => (minArea.value = value);
+const updateMaxArea = value => (maxArea.value = value);
+const handleMapViewportUpdate = viewport => {
+	currentViewport.value = viewport;
+	if (isInitialLoad.value) {
+		isInitialLoad.value = false;
+		return;
+	}
+	searchMapProperties();
 };
 
-// 초기 로드 시 시/도 목록 및 매물 검색
+// --- 이모티콘 관련 메소드 ---
+const handleMapClick = clickedPos => {
+	if (!currentUserPosition.value) {
+		toastMessage.value = '현재 위치 정보를 아직 가져오지 못했습니다.';
+		toastType.value = 'error';
+		showToast.value = true;
+		return;
+	}
+
+	const distance = calculateDistance(
+		currentUserPosition.value.lat,
+		currentUserPosition.value.lng,
+		clickedPos.lat,
+		clickedPos.lng,
+	);
+
+	console.log(`클릭된 위치와의 거리: ${distance.toFixed(2)} 미터`);
+
+	if (distance <= 10) {
+		clickedMapPosition.value = clickedPos;
+		currentDistance.value = distance;
+		showEmoticonModal.value = true;
+	} else {
+		toastMessage.value = `현재 위치에서 너무 멉니다. (거리: ${distance.toFixed(
+			2,
+		)}m)`;
+		toastType.value = 'error';
+		showToast.value = true;
+	}
+};
+
+const handleEmoticonSelect = async emoticon => {
+	if (!clickedMapPosition.value) return;
+
+	const emoticonData = {
+		latitude: clickedMapPosition.value.lat,
+		longitude: clickedMapPosition.value.lng,
+		emoticonType: emoticon.name,
+	};
+
+	try {
+		await addEmoticon(emoticonData);
+		toastMessage.value = `'${emoticon.name}' 감정을 등록했습니다!`;
+		toastType.value = 'success';
+		showToast.value = true;
+	} catch (error) {
+		console.error('이모티콘 등록 실패:', error);
+		toastMessage.value = '감정 등록에 실패했습니다. 다시 시도해주세요.';
+		toastType.value = 'error';
+		showToast.value = true;
+	}
+};
+
+// --- 라이프사이클 훅 ---
 onMounted(() => {
 	fetchSidoList();
+
+	// Geolocation API로 현재 위치 가져오기
+	if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(
+			position => {
+				currentUserPosition.value = {
+					lat: position.coords.latitude,
+					lng: position.coords.longitude,
+				};
+				console.log('현재 위치:', currentUserPosition.value);
+			},
+			error => {
+				console.error('Geolocation 에러:', error);
+				toastMessage.value = '위치 정보를 가져오는 데 실패했습니다.';
+				toastType.value = 'error';
+				showToast.value = true;
+			},
+		);
+	} else {
+		toastMessage.value =
+			'이 브라우저에서는 위치 정보 서비스를 지원하지 않습니다.';
+		toastType.value = 'error';
+		showToast.value = true;
+	}
 });
 </script>

@@ -162,7 +162,7 @@ const saveReview = () => {
     sentiment: selectedSentiment.value,
     emoticon: selectedEmoticon.value,
     description: description.value,
-    apartmentId: props.apartmentId
+    aptId: props.apartmentId
   };
   emit('save', reviewData);
 };

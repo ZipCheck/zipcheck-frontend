@@ -1,159 +1,17 @@
-# 프론트엔드 수정 요청 스크립트 – 찜 상태 표시 및 토글 버그 수정
-
-## 1. 현재 발생 중인 문제 요약
-
-* 서버 DB에는 이미 찜(interest) 데이터가 존재함
-* `/api/listings` 응답에는 `isFavorite: true` 가 정상적으로 내려오고 있음
-* 하지만 프론트 화면에서는 하트가 비어 있는 상태로 표시됨
-* 하트 클릭 시 항상 `POST /api/interests/{dealNo}` 가 호출되어
-  서버에서 **"이미 등록된 관심 매물입니다" 예외가 발생**함
-
-👉 이는 **프론트에서 `isFavorite` 값을 렌더링/토글 로직에 반영하지 않고 있기 때문**임
-
----
-
-## 2. 백엔드 API 계약 (확정 사항)
-
-### 2.1 매물 목록 조회
-
-```
-GET /api/listings
-Authorization: Bearer {accessToken}
-```
-
-응답 구조:
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "dealNo": 123,
-      "aptName": "디팰리스",
-      "dealAmount": "28억",
-      "isFavorite": true
-    }
-  ]
-}
-```
-
-* `isFavorite` 는 **DB 기준의 찜 상태**
-* 프론트는 이 값을 **절대 초기값으로 덮어쓰면 안 됨**
-
----
-
-### 2.2 찜 토글 API
-
-* 찜 등록
-
-```
-POST /api/interests/{dealNo}
-```
-
-* 찜 취소
-
-```
-DELETE /api/interests/{dealNo}
-```
-
----
-
-## 3. 프론트에서 반드시 수정해야 할 사항
-
-### 3.1 API 응답 매핑 (중요)
-
-❌ 잘못된 코드
-
-```js
-items.value = response.data;
-```
-
-✅ 올바른 코드
-
-```js
-items.value = response.data.data;
-```
-
-> 이 실수로 인해 `isFavorite`가 항상 `undefined → false` 처리되고 있음
-
----
-
-### 3.2 하트 아이콘 상태 바인딩
-
-❌ 잘못된 방식
-
-```vue
-<HeartIcon :active="false" />
-```
-
-✅ 반드시 아래처럼 구현
-
-```vue
-<HeartIcon :active="item.isFavorite" />
-```
-
----
-
-### 3.3 찜 토글 로직 (절대 중요)
-
-❌ 현재 문제 로직 (무조건 POST 호출)
-
-```js
-await api.post(`/api/interests/${dealNo}`);
-```
-
-✅ 반드시 상태 기반 분기 처리
-
-```js
-async function toggleFavorite(item) {
-  if (item.isFavorite) {
-    await api.delete(`/api/interests/${item.dealNo}`);
-    item.isFavorite = false;
-  } else {
-    await api.post(`/api/interests/${item.dealNo}`);
-    item.isFavorite = true;
-  }
-}
-```
-
----
-
-### 3.4 카드 클릭 이벤트와 분리
-
-* 하트 클릭 시 카드 상세 페이지로 이동하면 안 됨
-
-```vue
-<button @click.stop="toggleFavorite(item)">
-  <HeartIcon :active="item.isFavorite" />
-</button>
-```
-
----
-
-## 4. 디버깅 필수 확인 코드
-
-구현 후 반드시 콘솔에서 아래 값 확인:
-
-```js
-console.log(item.dealNo, item.isFavorite);
-```
-
-* 찜한 매물 → `true`
-* 찜 안 한 매물 → `false`
-
----
-
-## 5. 정상 동작 기준 (체크리스트)
-
-* [ ] 이미 찜한 매물은 처음부터 하트가 채워져 있음
-* [ ] 하트 클릭 시 찜/취소가 정상적으로 토글됨
-* [ ] 찜 취소 시 `DELETE` 호출됨
-* [ ] 중복 POST 요청 발생하지 않음
-* [ ] 서버에 "이미 등록된 관심 매물입니다" 에러가 더 이상 발생하지 않음
-
----
-
-## 6. 한 줄 요약 (프론트 AI용)
-
-> `/api/listings` 응답의 `isFavorite` 값을 그대로 사용해 하트 상태를 렌더링하고,
-> 하트 클릭 시 `isFavorite` 기준으로 POST/DELETE를 분기 처리해야 한다.
+C:/ssafyhome/zipcheck-frontend/vue-zipcheck/src/pages/MapEmoticonPage.vue:12:1
+9  |  	</main>
+10 |  </template>
+11 |  
+   |   ^
+12 |  <script setup>
+13 |  import { computed, ref } from 'vue';
+    at createCompilerError (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1364:17)
+    at emitError (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2997:5)
+    at Object.onend (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2599:7)
+    at Tokenizer.finish (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1232:14)
+    at Tokenizer.parse (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1210:10)
+    at Object.baseParse (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3036:13)
+    at Object.parse (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+    at Object.parse$1 [as parse] (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1801:24)
+    at createDescriptor (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vitejs\plugin-vue\dist\index.js:4005:43)
+    at handleHotUpdate (C:\ssafyhome\zipcheck-frontend\vue-zipcheck\node_modules\@vitejs\plugin-vue\dist\index.js:4

@@ -79,9 +79,9 @@ const fetchFavorites = async () => {
 	error.value = null;
 	try {
 		const response = await getFavoriteProperties(pagingInfo.value.page, pagingInfo.value.size);
-		if (response) {
-			properties.value = response.items || [];
-			pagingInfo.value.totalCount = response.totalCount || 0;
+		if (response && response.data) {
+			properties.value = response.data.items || [];
+			pagingInfo.value.totalCount = response.data.totalCount || 0;
 		} else {
 			properties.value = [];
 			pagingInfo.value.totalCount = 0;
