@@ -108,9 +108,18 @@ const handleRemoveFavorite = async (dealNo) => {
 };
 
 const goToMap = (property) => {
-	// TODO: 지도 페이지로 좌표 전달하는 기능 구현 필요
-	// 예: router.push({ path: '/map', query: { lat: property.latitude, lng: property.longitude } });
-	router.push('/map');
+	if (property.latitude && property.longitude) {
+		router.push({
+			path: '/map',
+			query: { lat: property.latitude, lng: property.longitude },
+		});
+	} else {
+		// 좌표 정보가 없는 경우, 그냥 지도로만 이동하고 사용자에게 알림
+		toastMessage.value = '해당 매물의 위치 정보가 없습니다.';
+		toastType.value = 'error';
+		showToast.value = true;
+		router.push('/map');
+	}
 };
 
 onMounted(() => {

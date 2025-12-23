@@ -63,8 +63,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, nextTick } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import MapSidebar from '@/components/map/MapSidebar.vue';
 import KakaoMap from '@/components/map/KakaoMap.vue';
 import ToastMessage from '@/components/common/ToastMessage.vue';
@@ -80,6 +80,7 @@ import {
 import { useMapStore } from '@/stores/map.store';
 
 const router = useRouter();
+const route = useRoute();
 const mapStore = useMapStore();
 const kakaoMapRef = ref(null);
 
@@ -351,6 +352,20 @@ onMounted(() => {
 				showToast.value = true;
 			},
 		);
+	}
+
+	// URL 쿼리 파라미터에 lat, lng가 있는지 확인
+	const { lat, lng } = route.query;
+	if (lat && lng) {
+		const latitude = parseFloat(lat);
+		const longitude = parseFloat(lng);
+
+		if (!isNaN(latitude) && !isNaN(longitude)) {
+			// nextTick을 사용하여 자식 컴포넌트가 마운트된 후 panTo를 호출
+			nextTick(() => {
+				kakaoMapRef.value?.panTo(latitude, longitude);
+			});
+		}
 	}
 });
 </script>
