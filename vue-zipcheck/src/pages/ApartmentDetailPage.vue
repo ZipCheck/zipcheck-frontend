@@ -1,3 +1,72 @@
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { getApartmentDeals } from '@/api/map.api.js';
+import PropertyCard from '@/components/map/PropertyCard.vue';
+import AiReport from '@/components/listing-detail/AiReport.vue';
+import ToastMessage from '@/components/common/ToastMessage.vue';
+
+const route = useRoute();
+const deals = ref([]);
+const loading = ref(true);
+const error = ref(null);
+
+// Toast state
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref('info');
+
+const pagingInfo = ref({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0
+});
+
+const aptName = computed(() => {
+    return deals.value.length > 0 ? deals.value[0].aptName : '아파트 상세 정보';
+});
+
+const fetchDeals = async (page = 1) => {
+    const aptSeq = route.params.aptSeq;
+    if (!aptSeq) {
+        error.value = new Error('아파트 정보가 없습니다.');
+        loading.value = false;
+        return;
+    }
+
+    loading.value = true;
+    try {
+        const response = await getApartmentDeals(aptSeq, page);
+        
+        if (response && response.data) {
+            deals.value = response.data;
+            pagingInfo.value = {
+                currentPage: response.currentPage,
+                totalPages: response.totalPages,
+                totalCount: response.totalCount
+            };
+        } else {
+            deals.value = [];
+        }
+    } catch (err) {
+        console.error('Failed to fetch apartment deals:', err);
+        error.value = err;
+    } finally {
+        loading.value = false;
+    }
+};
+
+const changePage = (page) => {
+    if (page < 1 || page > pagingInfo.value.totalPages) return;
+    fetchDeals(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+onMounted(() => {
+    fetchDeals();
+});
+</script>
+
 <template>
   <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
     <div v-if="loading && deals.length === 0" class="text-center py-10">
@@ -18,9 +87,11 @@
                 <span class="material-symbols-outlined text-lg">arrow_back</span> 
                 <span class="text-sm font-medium">지도 목록으로 돌아가기</span>
             </button>
-            <div class="flex items-end gap-3">
-                <h1 class="text-3xl font-bold text-gray-900">{{ aptName }}</h1>
-                <span class="text-gray-500 mb-1.5">총 <span class="text-primary font-bold">{{ pagingInfo.totalCount || deals.length }}</span>건의 매물</span>
+            <div class="flex items-center justify-between">
+                <div class="flex items-end gap-3">
+                    <h1 class="text-3xl font-bold text-gray-900">{{ aptName }}</h1>
+                    <span class="text-gray-500 mb-1.5">총 <span class="text-primary font-bold">{{ pagingInfo.totalCount || deals.length }}</span>건의 매물</span>
+                </div>
             </div>
         </div>
 
@@ -71,69 +142,6 @@
             </div>
         </div>
     </div>
-  </main>
+</main>
+<ToastMessage v-model:show="showToast" :message="toastMessage" :type="toastType" />
 </template>
-
-<script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { getApartmentDeals } from '@/api/map.api.js';
-import PropertyCard from '@/components/map/PropertyCard.vue';
-import AiReport from '@/components/listing-detail/AiReport.vue';
-
-const route = useRoute();
-const deals = ref([]);
-const loading = ref(true);
-const error = ref(null);
-
-const pagingInfo = ref({
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0
-});
-
-const aptName = computed(() => {
-    return deals.value.length > 0 ? deals.value[0].aptName : '아파트 상세 정보';
-});
-
-const fetchDeals = async (page = 1) => {
-    const aptSeq = route.params.aptSeq;
-    if (!aptSeq) {
-        error.value = new Error('아파트 정보가 없습니다.');
-        loading.value = false;
-        return;
-    }
-
-    loading.value = true;
-    try {
-        const response = await getApartmentDeals(aptSeq, page);
-        
-        if (response && response.data) {
-            deals.value = response.data;
-            pagingInfo.value = {
-                currentPage: response.currentPage || 1,
-                totalPages: response.totalPages || 1,
-                totalCount: response.totalCount || 0
-            };
-        } else if (Array.isArray(response)) {
-            deals.value = response;
-            pagingInfo.value = { currentPage: 1, totalPages: 1, totalCount: response.length };
-        }
-    } catch (err) {
-        console.error('Failed to fetch apartment deals:', err);
-        error.value = err;
-    } finally {
-        loading.value = false;
-    }
-};
-
-const changePage = (page) => {
-    if (page < 1 || page > pagingInfo.value.totalPages) return;
-    fetchDeals(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-onMounted(() => {
-    fetchDeals();
-});
-</script>

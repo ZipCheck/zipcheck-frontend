@@ -149,16 +149,13 @@ const searchMapProperties = async (params = {}) => {
 		const response = await searchProperties(searchParams);
         if (response && response.data) {
             properties.value = response.data;
-            // 페이징 정보 업데이트
             pagingInfo.value = {
-                currentPage: response.currentPage || 1,
-                totalPages: response.totalPages || 1,
-                totalCount: response.totalCount || 0
+                currentPage: response.currentPage,
+                totalPages: response.totalPages,
+                totalCount: response.totalCount
             };
-            console.log('MapPage: Paging Info Updated:', pagingInfo.value);
         } else {
             properties.value = [];
-            pagingInfo.value = { currentPage: 1, totalPages: 1, totalCount: 0 };
         }
 	} catch (err) {
 		console.error('Failed to search properties:', err);

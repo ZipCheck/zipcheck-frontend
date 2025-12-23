@@ -17,69 +17,26 @@
 						>ZipCheck</span
 					>
 				</router-link>
+
 				<!-- Navigation -->
-				<nav class="hidden md:flex items-center gap-8">
-					<router-link to="/" custom v-slot="{ href, navigate, isExactActive }">
-						<a
-							:href="href"
-							@click="navigate"
-							class="text-sm transition-colors hover:text-text-main"
-							:class="
-								isExactActive
-									? 'font-semibold text-text-main'
-									: 'font-medium text-text-muted'
-							"
-							>홈</a
-						>
-					</router-link>
-					<router-link to="/map" custom v-slot="{ href, navigate, isActive }">
-						<a
-							:href="href"
-							@click="navigate"
-							class="text-sm transition-colors hover:text-text-main"
-							:class="
-								isActive
-									? 'font-semibold text-text-main'
-									: 'font-medium text-text-muted'
-							"
-							>지도</a
-						>
-					</router-link>
+				<nav ref="navContainer" class="hidden md:flex items-center bg-gray-100 rounded-full p-1 relative">
+					<span
+						ref="slider"
+						class="absolute h-[32px] bg-white rounded-full shadow-md transition-all duration-300 ease-in-out"
+					></span>
+
 					<router-link
-						to="/boards"
-						custom
-						v-slot="{ href, navigate, isActive }"
+						v-for="link in links"
+						:key="link.to"
+						:ref="el => (linkRefs[link.to] = el)"
+						:to="link.to"
+						class="relative text-sm px-4 py-1.5 transition-colors z-10"
+						:class="linkIsActive(link) ? 'font-semibold text-text-main' : 'font-medium text-text-muted'"
 					>
-						<a
-							:href="href"
-							@click="navigate"
-							class="text-sm transition-colors hover:text-text-main"
-							:class="
-								isActive
-									? 'font-semibold text-text-main'
-									: 'font-medium text-text-muted'
-							"
-							>게시판</a
-						>
-					</router-link>
-					<router-link
-						to="/notices"
-						custom
-						v-slot="{ href, navigate, isActive }"
-					>
-						<a
-							:href="href"
-							@click="navigate"
-							class="text-sm transition-colors hover:text-text-main"
-							:class="
-								isActive
-									? 'font-semibold text-text-main'
-									: 'font-medium text-text-muted'
-							"
-							>공지사항</a
-						>
+						{{ link.text }}
 					</router-link>
 				</nav>
+
 				<!-- Auth Buttons -->
 				<div class="flex items-center gap-3">
 					<template v-if="isAuthenticated">
@@ -111,5 +68,48 @@
 </template>
 
 <script setup>
+import { ref, watch, onMounted, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
 import { isAuthenticated } from '@/stores/auth.store';
+
+const route = useRoute();
+const navContainer = ref(null);
+const slider = ref(null);
+const linkRefs = ref({});
+
+const links = [
+	{ to: '/', text: '홈', match: ['/'] },
+	{ to: '/map', text: '매물 지도', match: ['/map'] },
+	{ to: '/map-emoticon', text: '감정 지도', match: ['/map-emoticon'] },
+	{ to: '/boards', text: '게시판', match: ['/boards'] },
+	{ to: '/notices', text: '공지사항', match: ['/notices'] },
+];
+
+const linkIsActive = (link) => {
+	// 홈페이지('/')는 정확히 일치할 때만 active
+	if (link.to === '/') {
+		return route.path === '/';
+	}
+	// 다른 링크들은 하위 경로도 active로 처리 (e.g., /boards/1)
+	return link.match.some(path => route.path.startsWith(path));
+}
+
+const updateSliderPosition = () => {
+	const activeLink = links.find(link => linkIsActive(link));
+	if (activeLink) {
+		const activeLinkElement = linkRefs.value[activeLink.to]?.$el;
+		if (activeLinkElement && slider.value) {
+			slider.value.style.width = `${activeLinkElement.offsetWidth}px`;
+			slider.value.style.transform = `translateX(${activeLinkElement.offsetLeft}px)`;
+		}
+	}
+};
+
+watch(route, () => {
+	nextTick(updateSliderPosition);
+});
+
+onMounted(() => {
+	nextTick(updateSliderPosition);
+});
 </script>
