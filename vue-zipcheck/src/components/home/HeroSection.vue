@@ -93,36 +93,20 @@ const handleSearch = () => {
 	pointer-events: none;
 
 	/* 
-    README 요구사항에 따른 배경 재설계:
-    1. 명확한 그라데이션 적용 (#F8FAFF -> #EEF3FF)
-    2. 눈에 띄는 지도 라인 패턴 (hsla(220, 80%, 55%, 0.06) -> 6% opacity)
-    3. 미세한 노이즈 텍스처 (3% opacity)
-    - 전역 opacity를 제거하고 각 레이어의 투명도를 개별 제어하여 가시성 확보
+    README Polish 단계:
+    - 반복 패턴 완화를 위해 단일 대형 SVG 사용
+    - 중앙부 밀도 감소 및 크기/위치 변형 적용
+    - 미세한 포인트 컬러 추가
   */
-	background-image:
-		/* 2. Noise Texture (Subtle) */
-		repeating-conic-gradient(from 0.25turn, #00000008 0% 25%, #ffffff00 0% 25.02%),
-		/* 1. Map-like Line Pattern (Visible) */
-		linear-gradient(
-			135deg,
-			hsla(220, 80%, 55%, 0.06) 0,
-			hsla(220, 80%, 55%, 0.06) 1px,
-			transparent 1px,
-			transparent 60px
-		),
-		linear-gradient(
-			45deg,
-			hsla(220, 80%, 55%, 0.06) 0,
-			hsla(220, 80%, 55%, 0.06) 1px,
-			transparent 1px,
-			transparent 60px
-		),
-		/* 3. Base Gradient */
-		linear-gradient(to bottom, #f8faff, #eef3ff);
-
-	background-size:
-		/* Noise */ 16px 16px,
-		/* Lines */ 60px 60px, 60px 60px,
-		/* Base */ 100% 100%;
+	background:
+		/* 1. House/Apartment Landscape (Non-repeating) */
+		url("data:image/svg+xml,%3Csvg width='1400' height='250' viewBox='0 0 1400 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='%23C9D6EA' stroke-opacity='0.2' stroke-width='3' fill='none' stroke-linejoin='round' stroke-linecap='round'%3E%3C!-- Group 1 (Far Left) --%3E%3Cg transform='translate(50, 40) scale(0.9)'%3E%3Cpath d='M 20 180 L 20 100 L 70 50 L 120 100 L 120 180' /%3E%3Crect x='50' y='120' width='40' height='30' /%3E%3C/g%3E%3C!-- Group 2 (Left-ish) --%3E%3Cg transform='translate(220, 0)'%3E%3Crect x='150' y='80' width='100' height='100' /%3E%3Crect x='165' y='95' width='25' height='20' /%3E%3Crect x='210' y='95' width='25' height='20' /%3E%3C!-- Point Color Window --%3E%3Crect x='165' y='125' width='25' height='20' stroke='hsla(210, 100%25, 75%25, 0.18)' /%3E%3Crect x='210' y='125' width='25' height='20' /%3E%3C/g%3E%3C!-- Group 3 (Right-ish) --%3E%3Cg transform='translate(950, 30) scale(1.05)'%3E%3Cpath d='M 20 180 L 20 100 L 70 50 L 120 100 L 120 180' /%3E%3Crect x='50' y='120' width='40' height='30' /%3E%3C/g%3E%3C!-- Group 4 (Far Right) --%3E%3Cg transform='translate(1150, -10) scale(0.95)'%3E%3Crect x='150' y='80' width='100' height='100' /%3E%3Crect x='165' y='95' width='25' height='20' /%3E%3Crect x='210' y='95' width='25' height='20' /%3E%3Crect x='165' y='125' width='25' height='20' /%3E%3Crect x='210' y='125' width='25' height='20' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E") bottom center / 100% 250px no-repeat,
+		/* 2. Noise Texture */
+		repeating-conic-gradient(from 0.25turn, #00000005 0% 25%, #ffffff00 0% 25.02%) center / 16px 16px repeat,
+		/* 3. Map-like Line Pattern (Subtle) */
+		linear-gradient(135deg, hsla(220, 80%, 55%, 0.04) 0, hsla(220, 80%, 55%, 0.04) 1px, transparent 1px, transparent 60px) center / 60px 60px repeat,
+		linear-gradient(45deg, hsla(220, 80%, 55%, 0.04) 0, hsla(220, 80%, 55%, 0.04) 1px, transparent 1px, transparent 60px) center / 60px 60px repeat,
+		/* 4. Base Gradient */
+		linear-gradient(to bottom, #f8faff, #eef3ff) center / 100% 100% no-repeat;
 }
 </style>
