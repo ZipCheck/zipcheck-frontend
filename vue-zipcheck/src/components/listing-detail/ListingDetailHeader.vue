@@ -87,7 +87,7 @@
 			<div class="flex flex-col sm:flex-row gap-3">
 				<button
 					@click="toggleFavorite"
-					class="w-full sm:w-auto flex-shrink-0 bg-secondary hover:bg-secondary-hover text-secondary-foreground font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+					class="w-full sm:flex-1 bg-primary hover:bg-primary-hover text-primary-foreground font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
 				>
 					<span 
 						class="material-symbols-outlined"
@@ -98,7 +98,7 @@
 				</button>
 				<button
 					@click="handleContact"
-					class="w-full sm:flex-1 bg-primary hover:bg-primary-hover text-primary-foreground font-bold py-3 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2"
+					class="w-full sm:flex-1 bg-primary hover:bg-primary-hover text-primary-foreground font-bold py-3 px-6 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2"
 				>
 					<span class="material-symbols-outlined">phone</span>
 					문의하기

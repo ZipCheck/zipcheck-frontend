@@ -15,7 +15,7 @@
 			<button
 				@click="fetchAiReport"
 				:disabled="isLoadingAiReport"
-				class="px-6 py-3 rounded-lg text-sm font-bold text-black bg-primary hover:bg-primaryHover shadow-md hover:shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto"
+				class="px-6 py-3 rounded-lg text-sm font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md hover:shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto"
 			>
 				<span v-if="isLoadingAiReport" class="animate-spin material-symbols-outlined">
 					autorenew
@@ -92,7 +92,7 @@
             <button
                 @click="fetchAiReport"
                 :disabled="isLoadingAiReport"
-                class="mt-6 px-6 py-3 rounded-lg text-sm font-bold text-black bg-primary hover:bg-primaryHover shadow-md hover:shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto"
+                class="mt-6 px-6 py-3 rounded-lg text-sm font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md hover:shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto"
             >
                 <span v-if="isLoadingAiReport" class="animate-spin material-symbols-outlined">
 					autorenew

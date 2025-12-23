@@ -142,7 +142,7 @@
 				</button>
 				<button
 					:disabled="isSaving"
-					class="px-8 py-3.5 bg-primary text-gray-900 font-bold rounded-2xl hover:bg-yellow-400 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="px-8 py-3.5 bg-primary text-primary-foreground font-bold rounded-2xl hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
 					type="submit"
 				>
 					<span v-if="isSaving">저장 중...</span>

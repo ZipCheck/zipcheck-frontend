@@ -12,11 +12,11 @@
           <li v-for="post in posts" :key="post.boardId" class="border-b border-border-light dark:border-border-dark">
             <router-link :to="`/boards/${post.boardId}`" class="block py-4 px-2 hover:bg-surface-light dark:hover:bg-surface-dark transition-colors">
               <div class="grid grid-cols-12 items-center gap-4">
-                <div class="col-span-2 sm:col-span-1">
-                  <span class="text-xs font-bold px-2 py-1 rounded-md w-full text-center inline-block" :class="categoryStyles[post.category]">{{ categoryMap[post.category] || '기타' }}</span>
-                </div>
-                <div class="col-span-10 sm:col-span-7">
-                  <p class="text-text-main-light dark:text-text-main-dark font-medium truncate">{{ post.title }}</p>
+                <div class="col-span-12 sm:col-span-8">
+                  <div class="flex items-center gap-2">
+                    <span class="flex-shrink-0 text-xs font-bold px-2 py-1 rounded-md" :class="categoryStyles[post.category]">{{ categoryMap[post.category] || '기타' }}</span>
+                    <p class="text-text-main-light dark:text-text-main-dark font-medium truncate">{{ post.title }}</p>
+                  </div>
                 </div>
                 <div class="hidden sm:block sm:col-span-2 text-center text-xs text-text-sub-light dark:text-text-sub-dark">
                   {{ post.nickname }}

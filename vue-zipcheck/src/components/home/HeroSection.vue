@@ -1,15 +1,7 @@
 <template>
 	<section
-		class="relative bg-background-alt py-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center overflow-hidden"
+		class="hero-background relative py-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center"
 	>
-		<!-- Decorative Background Pattern -->
-		<div
-			class="absolute inset-0 opacity-30 pointer-events-none"
-			style="
-				background-image: radial-gradient(#e6e6db 1px, transparent 1px);
-				background-size: 24px 24px;
-			"
-		></div>
 		<div class="relative z-10 w-full max-w-4xl text-center space-y-8">
 			<div class="space-y-4">
 				<h1
@@ -40,7 +32,7 @@
 					/>
 					<div class="pr-2">
 						<button
-							class="h-12 px-8 bg-primary hover:bg-primary-dark rounded-full font-bold text-text-main transition-colors text-base whitespace-nowrap"
+							class="h-12 px-8 bg-primary hover:bg-primary-hover rounded-full font-bold text-primary-foreground transition-colors text-base whitespace-nowrap"
 							type="button"
 							@click="handleSearch"
 						>
@@ -82,3 +74,55 @@ const handleSearch = () => {
 	router.push('/map');
 };
 </script>
+
+<style scoped>
+.hero-background {
+	background-color: #f8faff; /* Fallback and top of gradient */
+	overflow: hidden;
+	position: relative;
+}
+
+.hero-background::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 0;
+	pointer-events: none;
+
+	/* 
+    README 요구사항에 따른 배경 재설계:
+    1. 명확한 그라데이션 적용 (#F8FAFF -> #EEF3FF)
+    2. 눈에 띄는 지도 라인 패턴 (hsla(220, 80%, 55%, 0.06) -> 6% opacity)
+    3. 미세한 노이즈 텍스처 (3% opacity)
+    - 전역 opacity를 제거하고 각 레이어의 투명도를 개별 제어하여 가시성 확보
+  */
+	background-image:
+		/* 2. Noise Texture (Subtle) */
+		repeating-conic-gradient(from 0.25turn, #00000008 0% 25%, #ffffff00 0% 25.02%),
+		/* 1. Map-like Line Pattern (Visible) */
+		linear-gradient(
+			135deg,
+			hsla(220, 80%, 55%, 0.06) 0,
+			hsla(220, 80%, 55%, 0.06) 1px,
+			transparent 1px,
+			transparent 60px
+		),
+		linear-gradient(
+			45deg,
+			hsla(220, 80%, 55%, 0.06) 0,
+			hsla(220, 80%, 55%, 0.06) 1px,
+			transparent 1px,
+			transparent 60px
+		),
+		/* 3. Base Gradient */
+		linear-gradient(to bottom, #f8faff, #eef3ff);
+
+	background-size:
+		/* Noise */ 16px 16px,
+		/* Lines */ 60px 60px, 60px 60px,
+		/* Base */ 100% 100%;
+}
+</style>

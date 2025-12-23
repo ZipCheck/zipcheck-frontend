@@ -10,7 +10,7 @@ export default {
 			colors: {
 				// Core Colors
 				primary: {
-					DEFAULT: 'hsl(210, 100%, 50%)', // Bright Blue
+					DEFAULT: 'hsl(210, 100%, 50%)', // Original Bright Blue
 					hover: 'hsl(210, 100%, 45%)',
 					foreground: 'hsl(0, 0%, 100%)', // White
 				},
