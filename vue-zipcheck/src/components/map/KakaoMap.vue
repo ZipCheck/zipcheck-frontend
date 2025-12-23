@@ -68,8 +68,9 @@
 				위치 인증 후 후기를 남겨보세요!
 			</div>
 			<button
-				class="w-14 h-14 bg-gray-300 dark:bg-gray-700 rounded-full shadow-lg flex items-center justify-center text-white cursor-not-allowed border-4 border-surface-light dark:border-surface-dark"
-				disabled=""
+				class="w-14 h-14 bg-gray-300 dark:bg-gray-700 rounded-full shadow-lg flex items-center justify-center text-white border-4 border-surface-light dark:border-surface-dark hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors"
+				type="button"
+				@click="toggleEmoticonMap"
 			>
 				<span class="material-symbols-outlined text-[28px]">add_reaction</span>
 			</button>
@@ -109,6 +110,8 @@
 
 <script setup>
 import { onMounted, ref, watch, shallowRef } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { loadKakaoMap } from '@/utils/kakao';
 
 const props = defineProps({
   properties: {
@@ -118,26 +121,21 @@ const props = defineProps({
 });
 
 const map = shallowRef(null);
+const router = useRouter();
+const route = useRoute();
 let markers = []; // 마커들을 담을 배열
 let overlays = []; // 오버레이들을 담을 배열
 
-onMounted(() => {
-  if (window.kakao && window.kakao.maps) {
-    initMap();
-  } else {
-    // SDK가 아직 로드되지 않았을 경우 0.5초마다 체크 (최대 10번 시도)
-    let attempts = 0;
-    const interval = setInterval(() => {
-      attempts++;
-      if (window.kakao && window.kakao.maps) {
-        clearInterval(interval);
-        initMap();
-      } else if (attempts >= 10) {
-        clearInterval(interval);
-        console.error('Kakao Maps SDK 로드 실패: 인터넷 연결이나 API 키 설정을 확인해주세요.');
-      }
-    }, 500);
-  }
+onMounted(async () => {
+	try {
+		await loadKakaoMap();
+		initMap();
+	} catch (error) {
+		console.error(
+			'Kakao Maps SDK 로드 실패: 인터넷 연결이나 API 키 설정을 확인해주세요.',
+			error,
+		);
+	}
 });
 
 const initMap = () => {
@@ -319,6 +317,14 @@ const emitMapViewport = () => {
     };
     console.log('KakaoMap: Emitting map viewport:', viewport);
     emit('update:map-viewport', viewport);
+};
+
+const toggleEmoticonMap = () => {
+	if (route.path === '/map-emoticon') {
+		router.push('/map');
+		return;
+	}
+	router.push('/map-emoticon');
 };
 
 // properties prop 변경을 감지하여 마커 업데이트
