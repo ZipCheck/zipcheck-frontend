@@ -285,37 +285,22 @@ const toggleEmoticonMap = () => {
 };
 let userPositionMarker = null; // 사용자 위치 마커 참조
 
-// userPosition prop 변경을 감지하여 사용자 위치 마커 업데이트
-watch(() => props.userPosition, (newUserPosition) => {
-  if (map.value && newUserPosition) {
-    const markerPosition = new window.kakao.maps.LatLng(newUserPosition.lat, newUserPosition.lng);
-
-    // 기존 마커가 있으면 위치만 업데이트, 없으면 새로 생성
-    if (userPositionMarker) {
-      userPositionMarker.setPosition(markerPosition);
-    } else {
-      // 파란색 점으로 표현되는 마커 이미지
-      const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_point.png';
-      const imageSize = new window.kakao.maps.Size(12, 12);
-      const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize);
-
-      userPositionMarker = new window.kakao.maps.Marker({
-        position: markerPosition,
-        image: markerImage,
-      });
-      userPositionMarker.setMap(map.value);
-      // 처음 위치를 받았을 때만 지도의 중심을 이동
-      map.value.setCenter(markerPosition);
-    }
-  }
-}, { deep: true });
-
-// properties prop 변경을 감지하여 마커 업데이트
 watch(() => props.properties, (newProperties) => {
   if (map.value) { // 지도 객체가 초기화된 후에만 마커를 그립니다.
     drawMarkers(newProperties);
   }
-}); // 배열 내부의 객체 변경도 감지 (필요시) -> deep: true 제거 (성능 이슈 방지)
+});
+
+const panTo = (lat, lng) => {
+  if (map.value && lat && lng) {
+    const moveLatLon = new window.kakao.maps.LatLng(lat, lng);
+    map.value.panTo(moveLatLon);
+  }
+};
+
+defineExpose({
+  panTo,
+});
 </script>
 
 <style scoped>

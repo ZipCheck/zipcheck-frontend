@@ -13,6 +13,7 @@
                 v-for="emoticon in emoticons"
                 :key="emoticon.name"
                 class="emoticon-btn"
+                :disabled="distance > 10"
                 @click="selectEmoticon(emoticon)"
               >
                 <span class="emoticon-icon">{{ emoticon.icon }}</span>
@@ -124,6 +125,13 @@ const selectEmoticon = (emoticon) => {
 .emoticon-btn:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.emoticon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .emoticon-icon {

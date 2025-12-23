@@ -30,12 +30,24 @@
 			@reset-selection="resetSelection"
 		/>
 		<KakaoMap
+			ref="kakaoMapRef"
 			:properties="properties"
 			@select-property="handlePropertySelect"
 			@update:map-viewport="handleMapViewportUpdate"
 			@map-click="handleMapClick"
 			:user-position="currentUserPosition"
 		/>
+		<!-- 현재 위치로 이동 버튼 -->
+		<div class="absolute bottom-24 right-8 z-20">
+			<button
+				@click="moveToCurrentUserPosition"
+				class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center text-gray-700 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+				type="button"
+				aria-label="현재 위치로 이동"
+			>
+				<span class="material-symbols-outlined">my_location</span>
+			</button>
+		</div>
 		<ToastMessage
 			v-model:show="showToast"
 			:message="toastMessage"
@@ -69,6 +81,7 @@ import { useMapStore } from '@/stores/map.store';
 
 const router = useRouter();
 const mapStore = useMapStore();
+const kakaoMapRef = ref(null);
 
 // --- 매물 관련 상태 ---
 const properties = ref([]);
@@ -237,8 +250,12 @@ const handleMapViewportUpdate = viewport => {
 
 // --- 이모티콘 관련 메소드 ---
 const handleMapClick = clickedPos => {
-	if (!currentUserPosition.value) {
-		toastMessage.value = '현재 위치 정보를 아직 가져오지 못했습니다.';
+	if (
+		!currentUserPosition.value ||
+		typeof currentUserPosition.value.lat !== 'number' ||
+		typeof currentUserPosition.value.lng !== 'number'
+	) {
+		toastMessage.value = '현재 위치 정보가 유효하지 않습니다. 위치 권한을 확인하고, 현재 위치 버튼을 눌러주세요.';
 		toastType.value = 'error';
 		showToast.value = true;
 		return;
@@ -288,11 +305,36 @@ const handleEmoticonSelect = async emoticon => {
 	}
 };
 
+const moveToCurrentUserPosition = () => {
+	if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(
+			position => {
+				const { latitude, longitude } = position.coords;
+				currentUserPosition.value = { lat: latitude, lng: longitude };
+				kakaoMapRef.value?.panTo(latitude, longitude);
+				toastMessage.value = '현재 위치로 이동했습니다.';
+				toastType.value = 'success';
+				showToast.value = true;
+			},
+			error => {
+				console.error('Geolocation 에러:', error);
+				toastMessage.value = '위치 정보를 가져오는 데 실패했습니다.';
+				toastType.value = 'error';
+				showToast.value = true;
+			},
+		);
+	} else {
+		toastMessage.value = '이 브라우저에서는 위치 정보 서비스를 지원하지 않습니다.';
+		toastType.value = 'error';
+		showToast.value = true;
+	}
+};
+
 // --- 라이프사이클 훅 ---
 onMounted(() => {
 	fetchSidoList();
 
-	// Geolocation API로 현재 위치 가져오기
+	// 페이지 로드 시 현재 위치를 가져오지만, 지도를 바로 이동시키지는 않음 (이모티콘 기능용)
 	if (navigator.geolocation) {
 		navigator.geolocation.getCurrentPosition(
 			position => {
@@ -304,16 +346,11 @@ onMounted(() => {
 			},
 			error => {
 				console.error('Geolocation 에러:', error);
-				toastMessage.value = '위치 정보를 가져오는 데 실패했습니다.';
+				toastMessage.value = '현재 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요.';
 				toastType.value = 'error';
 				showToast.value = true;
 			},
 		);
-	} else {
-		toastMessage.value =
-			'이 브라우저에서는 위치 정보 서비스를 지원하지 않습니다.';
-		toastType.value = 'error';
-		showToast.value = true;
 	}
 });
 </script>

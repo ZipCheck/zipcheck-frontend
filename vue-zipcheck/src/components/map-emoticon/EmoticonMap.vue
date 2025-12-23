@@ -269,6 +269,17 @@ watch(
 const toggleEmoticonMap = () => {
 	router.push('/map');
 };
+
+const panTo = (lat, lng) => {
+	if (map.value && lat && lng) {
+		const moveLatLon = new window.kakao.maps.LatLng(lat, lng);
+		map.value.panTo(moveLatLon);
+	}
+};
+
+defineExpose({
+	panTo,
+});
 </script>
 
 <style>
