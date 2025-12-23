@@ -1,10 +1,7 @@
 <template>
 	<img
 		:src="imageSrc"
-		:width="size"
-		:height="size"
-		:class="['rounded-full', 'object-cover', 'bg-gray-200', 'dark:bg-gray-700']"
-		:style="{ width: `${size}px`, height: `${size}px` }"
+		:class="['rounded-full', 'object-cover', 'bg-gray-200', 'dark:bg-gray-700', sizeClasses]"
 		@error="handleImageError"
 		alt="User profile image"
 	/>
@@ -20,8 +17,8 @@ const props = defineProps({
 		default: null,
 	},
 	size: {
-		type: Number,
-		required: true,
+		type: String,
+		default: 'w-8 h-8',
 	},
 });
 
@@ -33,6 +30,8 @@ const imageSrc = computed(() => {
 	// Otherwise, use the provided profileImageUrl.
 	return props.profileImageUrl;
 });
+
+const sizeClasses = computed(() => props.size);
 
 const handleImageError = event => {
 	// If the image fails to load, replace it with the default avatar.

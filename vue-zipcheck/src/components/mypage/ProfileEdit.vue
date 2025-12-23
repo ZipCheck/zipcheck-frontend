@@ -251,6 +251,7 @@ const handleFileChange = async event => {
 		const response = await updateMyProfileImage(formData);
 		profileImageUrl.value = response.data;
 		alert('프로필 이미지가 성공적으로 변경되었습니다.');
+		window.location.reload();
 	} catch (error) {
 		console.error('Image upload failed:', error);
 		alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
@@ -268,6 +269,7 @@ const handleRemoveProfileImage = async () => {
 		await updateMyProfileImage(formData);
 		profileImageUrl.value = null;
 		alert('프로필 사진이 삭제되었습니다.');
+		window.location.reload();
 	} catch (error) {
 		console.error('Failed to remove profile image:', error);
 		alert('프로필 사진 삭제에 실패했습니다.');
@@ -321,8 +323,8 @@ const handleProfileUpdate = async () => {
 	isSaving.value = false;
 
 	const failures = results
-		.filter(res => res.value?.error)
-		.map(res => res.value.message);
+		.filter(res => res.status === 'rejected' || res.value?.error)
+		.map(res => res.reason?.response?.data?.message || res.value?.message || '알 수 없는 오류 발생');
 
 	if (failures.length > 0) {
 		alert(`다음과 같은 오류가 발생했습니다:\n- ${failures.join('\n- ')}`);
@@ -334,6 +336,18 @@ const handleProfileUpdate = async () => {
 		currentPassword.value = '';
 		newPassword.value = '';
 		confirmPassword.value = '';
+
+		// Determine if password was changed successfully
+		const passwordChangeSucceeded = results.some(res => res.status === 'fulfilled' && res.value?.type === 'password');
+
+		if (isPasswordEntered && passwordChangeSucceeded) {
+			// If password was changed, force logout
+			authStore.clearToken();
+			window.location.href = '/'; // Redirect to home after logout
+		} else if (isNicknameChanged) {
+			// If only nickname was changed, just reload the page
+			window.location.reload();
+		}
 	}
 };
 

@@ -1,6 +1,31 @@
+/* Import Pretendard Webfont */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    background-color: theme('colors.background.light');
+    background-image: linear-gradient(to bottom right, theme('colors.background.light'), theme('colors.surface.light'));
+    color: theme('colors.text.main.light');
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark body {
+    background-color: theme('colors.background.dark');
+    background-image: linear-gradient(to bottom right, theme('colors.background.dark'), theme('colors.surface.dark'));
+    color: theme('colors.text.main.dark');
+  }
+
+	/* Add icon-filled style for filled material symbols */
+	.icon-filled {
+		font-variation-settings: 'FILL' 1;
+	}
+}
 
 body {
   font-family: 'Spline Sans', 'Noto Sans KR', sans-serif;

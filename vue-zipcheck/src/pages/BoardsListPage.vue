@@ -109,7 +109,7 @@
 												<div class="flex items-center gap-2">
 													<UserProfileAvatar
 														:profile-image-url="board.profileImageUrl"
-														:size="32"
+														:size="'w-8 h-8'"
 													/>
 													<span
 														class="text-xs font-medium text-gray-700 dark:text-gray-300"

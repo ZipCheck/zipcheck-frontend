@@ -5,98 +5,100 @@
 			<div class="w-full h-[450px] flex gap-2">
 				<!-- Main Image -->
 				<div class="w-2/3 h-full">
-					<img :src="images[0]" alt="Main property image" class="rounded-lg object-cover w-full h-full" />
+					<img :src="images[0]" alt="Main property image" class="rounded-xl object-cover w-full h-full" />
 				</div>
 				<!-- Side Images -->
 				<div class="w-1/3 h-full flex flex-col gap-2">
 					<div class="h-1/2">
-						<img :src="images[1]" alt="Property image 2" class="rounded-lg object-cover w-full h-full" />
+						<img :src="images[1]" alt="Property image 2" class="rounded-xl object-cover w-full h-full" />
 					</div>
 					<div class="h-1/2">
-						<img :src="images[2]" alt="Property image 3" class="rounded-lg object-cover w-full h-full" />
+						<img :src="images[2]" alt="Property image 3" class="rounded-xl object-cover w-full h-full" />
 					</div>
 				</div>
 			</div>
 		</section>
 
 		<section
-			class="bg-card-light dark:bg-card-dark rounded-2xl shadow-soft p-6 md:p-8 border border-gray-50 dark:border-gray-800"
+			class="bg-card-light dark:bg-card-dark rounded-2xl"
 		>
 			<div
-				class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 border-b border-gray-100 dark:border-gray-700 pb-6"
+				class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 pb-6"
 			>
 				<div>
 					<div class="flex items-center gap-2 mb-2">
 						<span
-							class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs font-bold px-2 py-1 rounded"
+							class="bg-secondary text-secondary-foreground text-xs font-bold px-3 py-1 rounded-md"
 							>매매</span
 						>
 						<span class="text-text-sub-light dark:text-text-sub-dark text-sm"
 							>등록일 {{ formattedDealDate }}</span
 						>
 					</div>
-					<h1 class="text-3xl font-bold mb-2">{{ property.aptName }}</h1>
+					<h1 class="text-3xl font-bold mb-2 text-text-main-light dark:text-text-main-dark">{{ property.aptName }}</h1>
 					<p
 						class="text-text-sub-light dark:text-text-sub-dark flex items-center gap-1"
 					>
-						<span class="material-symbols-outlined text-sm">location_on</span>
-						{{ property.roadNm }} (지번: {{ property.jibun }})
+						<span class="material-symbols-outlined text-base">location_on</span>
+						{{ property.roadNm }}
 					</p>
 				</div>
-				<div class="text-right md:text-right w-full md:w-auto">
+				<div class="text-left md:text-right w-full md:w-auto shrink-0">
 					<p class="text-sm text-text-sub-light dark:text-text-sub-dark mb-1">
 						매매가
 					</p>
-					<p class="text-4xl font-bold text-primary dark:text-yellow-400">
+					<p class="text-4xl font-bold text-primary">
 						{{ formattedDealAmount }}
 					</p>
 				</div>
 			</div>
-			<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+			
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark mb-8">
 				<div class="flex flex-col">
 					<span
-						class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-wider mb-1"
+						class="text-sm text-text-sub-light dark:text-text-sub-dark mb-1"
 						>전용면적</span
 					>
-					<span class="font-semibold text-lg">{{ property.excluUseAr }}㎡</span>
+					<span class="font-semibold text-lg text-text-main-light dark:text-text-main-dark">{{ property.excluUseAr }}㎡</span>
 				</div>
 				<div class="flex flex-col">
 					<span
-						class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-wider mb-1"
+						class="text-sm text-text-sub-light dark:text-text-sub-dark mb-1"
 						>해당층</span
 					>
-				<span class="font-semibold text-lg">{{ property.floor }}층</span>
+				<span class="font-semibold text-lg text-text-main-light dark:text-text-main-dark">{{ property.floor }}층</span>
 				</div>
 				<div class="flex flex-col">
 					<span
-						class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-wider mb-1"
+						class="text-sm text-text-sub-light dark:text-text-sub-dark mb-1"
 						>방수/욕실수</span
 					>
-					<span class="font-semibold text-lg">3개 / 2개</span> <!-- API에 없음 -->
+					<span class="font-semibold text-lg text-text-main-light dark:text-text-main-dark">3개 / 2개</span> <!-- API에 없음 -->
 				</div>
 				<div class="flex flex-col">
 					<span
-						class="text-xs text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-wider mb-1"
+						class="text-sm text-text-sub-light dark:text-text-sub-dark mb-1"
 						>건축년도</span
 					>
-					<span class="font-semibold text-lg">{{ property.buildYear }}</span>
+					<span class="font-semibold text-lg text-text-main-light dark:text-text-main-dark">{{ property.buildYear }}</span>
 				</div>
 			</div>
-			<div class="mt-8 flex gap-3">
+
+			<div class="flex flex-col sm:flex-row gap-3">
 				<button
 					@click="toggleFavorite"
-					class="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-text-main-light dark:text-text-main-dark font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+					class="w-full sm:w-auto flex-shrink-0 bg-secondary hover:bg-secondary-hover text-secondary-foreground font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
 				>
 					<span 
 						class="material-symbols-outlined"
 						:class="{ 'text-red-500 icon-filled': isFavorite }">
-						{{ isFavorite ? 'favorite' : 'favorite_border' }}
+						favorite
 					</span>
 					{{ isFavorite ? '찜 해제' : '찜하기' }}
 				</button>
 				<button
 					@click="handleContact"
-					class="flex-1 bg-primary hover:bg-primary-hover text-black font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+					class="w-full sm:flex-1 bg-primary hover:bg-primary-hover text-primary-foreground font-bold py-3 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2"
 				>
 					<span class="material-symbols-outlined">phone</span>
 					문의하기
@@ -133,7 +135,6 @@ const imgPaths = [
     new URL('../../../../img/images (8).jpeg', import.meta.url).href,
     new URL('../../../../img/images (7).jpeg', import.meta.url).href,
     new URL('../../../../img/images (6).jpeg', import.meta.url).href,
-    new URL('../../../../img/images (5).jpeg', import.meta.url).href,
     new URL('../../../../img/images (4).jpeg', import.meta.url).href,
     new URL('../../../../img/images (3).jpeg', import.meta.url).href,
     new URL('../../../../img/images (2).jpeg', import.meta.url).href,

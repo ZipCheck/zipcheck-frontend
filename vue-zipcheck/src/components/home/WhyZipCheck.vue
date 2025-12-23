@@ -1,61 +1,41 @@
 <template>
-	<section class="bg-background-alt rounded-[3rem] p-10 md:p-16 text-center">
-		<div class="max-w-3xl mx-auto space-y-12">
-			<div class="space-y-4">
-				<h2 class="text-2xl md:text-3xl font-bold text-text-main">
-					투명하고 신뢰할 수 있는 주거 정보
-				</h2>
-				<p class="text-text-muted text-base md:text-lg">
-					ZipCheck는 사용자 중심의 투명한 부동산 생태계를 만들어갑니다.
-				</p>
-			</div>
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-				<div class="flex flex-col items-center gap-4">
-					<div
-						class="size-16 rounded-full bg-white shadow-sm border border-border-color flex items-center justify-center text-primary-dark"
-					>
-						<span class="material-symbols-outlined text-3xl"
-							>verified_user</span
-						>
-					</div>
-					<div>
-						<h3 class="font-bold text-lg mb-2">검증된 사용자</h3>
-						<p class="text-sm text-text-muted leading-relaxed">
-							휴대폰 및 거주지 인증을 완료한<br />실사용자들의 커뮤니티
-						</p>
-					</div>
-				</div>
-				<div class="flex flex-col items-center gap-4">
-					<div
-						class="size-16 rounded-full bg-white shadow-sm border border-border-color flex items-center justify-center text-primary-dark"
-					>
-						<span class="material-symbols-outlined text-3xl">visibility</span>
-					</div>
-					<div>
-						<h3 class="font-bold text-lg mb-2">투명한 정보</h3>
-						<p class="text-sm text-text-muted leading-relaxed">
-							허위 매물과 광고성 글 없는<br />깨끗한 정보 제공
-						</p>
-					</div>
-				</div>
-				<div class="flex flex-col items-center gap-4">
-					<div
-						class="size-16 rounded-full bg-white shadow-sm border border-border-color flex items-center justify-center text-primary-dark"
-					>
-						<span class="material-symbols-outlined text-3xl"
-							>sentiment_satisfied</span
-						>
-					</div>
-					<div>
-						<h3 class="font-bold text-lg mb-2">사용자 중심 서비스</h3>
-						<p class="text-sm text-text-muted leading-relaxed">
-							이윤보다 사용자의 경험을<br />최우선으로 생각하는 가치
-						</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
+  <section class="py-20 sm:py-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-text-main-light dark:text-text-main-dark">왜 집첵을 사용해야 할까요?</h2>
+        <p class="mt-4 text-text-sub-light dark:text-text-sub-dark">
+          집첵은 신뢰할 수 있는 데이터와 AI 기술로 당신의 합리적인 결정을 돕습니다.
+        </p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div v-for="feature in features" :key="feature.name" class="bg-surface-light dark:bg-surface-dark p-8 rounded-xl border border-border-light dark:border-border-dark text-center">
+          <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 text-primary mx-auto mb-6">
+            <span class="material-symbols-outlined text-3xl">{{ feature.icon }}</span>
+          </div>
+          <h3 class="text-xl font-bold text-text-main-light dark:text-text-main-dark mb-2">{{ feature.name }}</h3>
+          <p class="text-text-sub-light dark:text-text-sub-dark">{{ feature.description }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
 
-<script setup></script>
+<script setup>
+const features = [
+  {
+    name: '신뢰성 있는 빅데이터',
+    description: '국토교통부 실거래가 데이터를 기반으로 정확하고 신뢰성 있는 정보를 제공합니다.',
+    icon: 'database',
+  },
+  {
+    name: 'AI 매물 분석 리포트',
+    description: 'AI가 매물의 특징과 주변 환경을 분석하여 보기 쉬운 리포트로 제공합니다.',
+    icon: 'auto_awesome',
+  },
+  {
+    name: '실거주자 리뷰',
+    description: '실제 거주 경험이 있는 사용자들의 생생한 리뷰를 통해 아파트의 장단점을 파악할 수 있습니다.',
+    icon: 'rate_review',
+  },
+];
+</script>

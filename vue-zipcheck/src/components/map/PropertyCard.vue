@@ -1,34 +1,34 @@
 <template>
 	<div
 		@click="goToDetail"
-		class="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow cursor-pointer group"
+		class="bg-card-light dark:bg-card-dark p-4 rounded-xl shadow-soft hover:shadow-soft-hover border border-border-light dark:border-border-dark transition-all cursor-pointer group"
 	>
-		<div class="flex justify-between items-start mb-2">
+		<div class="flex justify-between items-start mb-3">
 			<span
-				class="text-[10px] font-bold px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+				class="text-xs font-bold px-2.5 py-1 rounded-md bg-secondary dark:bg-secondary/20 text-secondary-foreground dark:text-text-sub-dark"
 			>
 				매매
 			</span>
-			<button @click.stop="toggleFavorite" class="p-1 -m-1">
+			<button @click.stop="toggleFavorite" class="p-1 -m-1 text-text-sub-light dark:text-text-sub-dark hover:text-red-500 dark:hover:text-red-500 transition-colors">
 				<span
-					class="material-symbols-outlined transition-colors text-[20px]"
-					:class="property.isFavorite ? 'text-red-500 icon-filled' : 'text-gray-300 group-hover:text-red-400'"
+					class="material-symbols-outlined transition-colors text-xl"
+					:class="{ 'text-red-500 icon-filled': property.isFavorite }"
 				>
 					favorite
 				</span>
 			</button>
 		</div>
 		<h3
-			class="font-bold text-base mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+			class="font-bold text-lg mb-1 text-text-main-light dark:text-text-main-dark group-hover:text-primary dark:group-hover:text-primary transition-colors"
 		>
 			{{ property.aptName }}
 		</h3>
-		<p class="text-xs text-text-sub-light dark:text-text-sub-dark mb-3">
-			{{ property.roadNm }} (지번: {{ property.jibun }})
+		<p class="text-sm text-text-sub-light dark:text-text-sub-dark mb-4 truncate">
+			{{ property.roadNm }}
 		</p>
-		<div class="flex items-center gap-2 mb-3">
-			<span class="text-lg font-bold">{{ formattedDealAmount }}</span>
-			<span class="text-xs text-text-sub-light dark:text-text-sub-dark">{{
+		<div class="flex items-baseline gap-2">
+			<span class="text-xl font-bold text-text-main-light dark:text-text-main-dark">{{ formattedDealAmount }}</span>
+			<span class="text-sm text-text-sub-light dark:text-text-sub-dark">{{
 				property.excluUseAr
 			}}㎡</span>
 		</div>

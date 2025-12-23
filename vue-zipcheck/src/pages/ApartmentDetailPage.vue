@@ -40,7 +40,10 @@ const fetchDeals = async () => {
         const response = await getApartmentDeals(aptSeq, 1, 200);
         
         if (response && response.data) {
-            deals.value = response.data;
+            // Sort all deals by date descending (newest first)
+            deals.value = response.data.sort((a, b) => 
+                new Date(b.dealYear, b.dealMonth - 1, b.dealDay) - new Date(a.dealYear, a.dealMonth - 1, a.dealDay)
+            );
             updatePaginatedDeals();
         } else {
             deals.value = [];
@@ -93,8 +96,8 @@ onMounted(() => {
             </button>
             <div class="flex items-center justify-between">
                 <div class="flex items-end gap-3">
-                    <h1 class="text-3xl font-bold text-gray-900">{{ aptName }}</h1>
-                    <span class="text-gray-500 mb-1.5">총 <span class="text-primary font-bold">{{ deals.length }}</span>건의 매물</span>
+                    <h1 class="text-3xl font-bold text-text-main-light dark:text-text-main-dark">{{ aptName }}</h1>
+                    <span class="text-text-sub-light dark:text-text-sub-dark mb-1.5">총 <span class="text-primary font-bold">{{ deals.length }}</span>건의 매물</span>
                 </div>
             </div>
         </div>
@@ -108,7 +111,7 @@ onMounted(() => {
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- 매물 리스트 영역 -->
             <div class="lg:col-span-8">
-                <div v-if="deals.length === 0" class="text-center py-10 text-gray-500">
+                <div v-if="deals.length === 0" class="text-center py-10 text-text-sub-light dark:text-text-sub-dark">
                     등록된 매물이 없습니다.
                 </div>
                 

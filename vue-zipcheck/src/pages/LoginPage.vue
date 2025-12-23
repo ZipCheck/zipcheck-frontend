@@ -152,7 +152,8 @@ const handleLogin = async () => {
 		});
 		if (loginResponseData.accessToken) {
 			authStore.setToken(loginResponseData.accessToken);
-			router.push('/');
+			// Force a hard navigation to the homepage to ensure all states are refreshed.
+			window.location.href = '/';
 		}
 	} catch (error) {
 		const errorMessage =

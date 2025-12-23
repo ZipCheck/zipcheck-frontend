@@ -33,7 +33,7 @@
 								<div class="flex items-center gap-3">
 									<UserProfileAvatar
 										:profile-image-url="board.profileImageUrl"
-										:size="24"
+										:size="'w-10 h-10'"
 									/>
 									<div>
 										<p
@@ -123,7 +123,7 @@
 						<div class="flex items-start gap-4 mb-6">
 							<UserProfileAvatar
 								:profile-image-url="user?.profileImageUrl"
-								:size="24"
+								:size="'w-10 h-10'"
 							/>
 							<div class="flex-1">
 								<form @submit.prevent="handleCreateComment">
@@ -153,15 +153,15 @@
 							>
 								<p>아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>
 							</div>
-							<div
-								v-for="comment in comments"
-								:key="comment.commentId"
-								class="flex items-start gap-4"
-							>
-								<UserProfileAvatar
-									:profile-image-url="comment.profileImageUrl"
-									:size="24"
-								/>
+														<div
+															v-for="comment in comments"
+															:key="comment.commentId"
+															class="flex items-start gap-4"
+														>
+															<UserProfileAvatar
+																:profile-image-url="comment.profileImageUrl"
+																:size="'w-10 h-10'"
+															/>
 								<div class="flex-1">
 									<div class="flex justify-between items-center mb-1">
 										<span class="font-bold text-sm">{{
