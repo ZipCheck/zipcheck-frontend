@@ -30,9 +30,12 @@
 					<div>
 						<h2 class="font-bold text-lg text-text-main-light dark:text-text-main-dark">{{ prop.aptName }}</h2>
 						<p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">
+							{{ prop.roadNm || prop.jibun }}
+						</p>
+						<p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">
 							{{ prop.dealAmount }} · {{ prop.floor }}층 · {{ prop.excluUseAr }}㎡
 						</p>
-						<p class="text-xs text-gray-400 mt-2">찜한 날짜: {{ new Date(prop.createdAt).toLocaleDateString() }}</p>
+						<p class="text-xs text-gray-400 mt-2">거래 날짜: {{ prop.dealYear }}.{{ prop.dealMonth }}.{{ prop.dealDay }}</p>
 					</div>
 					<div class="flex items-center gap-4">
 						<button @click="handleRemoveFavorite(prop.dealNo)" class="text-red-500 hover:text-red-700 transition-colors">

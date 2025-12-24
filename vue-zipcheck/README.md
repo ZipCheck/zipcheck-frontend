@@ -1,144 +1,176 @@
-# 🏠 매물 상세 – 거주민 스티커 & 반응 기능
+# 📌 ZipCheck 찜 목록 API 명세서 (마이페이지)
 
-본 문서는 **ZipCheck** 프로젝트의 매물 상세 페이지에서 사용되는
-**거주민 스티커(이모티콘) 및 간단 리뷰 기능**에 대한 설명을 담고 있습니다.
-
-해당 기능은 **하드코딩 없이 백엔드 API 연동을 통해 동적으로 렌더링**되며,
-실제 거주민의 반응을 시각적으로 보여주는 것을 목표로 합니다.
+본 문서는 **마이페이지 > 찜한 매물** 화면 구현을 위해
+프론트엔드에서 반드시 알아야 할 **API 명세 및 응답 구조**를 정리한 문서입니다.
 
 ---
 
-## 📌 기능 개요
+## 1. 개요
 
-* 특정 아파트(aptId)에 대해
-
-  * 거주민이 남긴 **이모티콘 스티커** 수집
-  * 스티커 비율 기반 **반응 요약 UI** 제공
-  * 스티커에 포함된 **간단 리뷰 리스트** 표시
+* 기능명: 찜한 매물 조회 / 등록 / 삭제
+* 대상 화면: 마이페이지 > 찜한 매물
+* 인증 방식: 로그인 필수 (JWT 기반)
+* Base URL: `/api/interests`
 
 ---
 
-## 🔗 사용 API
+## 2. 찜한 매물 목록 조회
 
-### 1️⃣ 스티커 목록 조회
+### 🔹 API
 
-```http
-GET /api/stickers?aptId={aptId}
+```
+GET /api/interests
 ```
 
-### 응답 예시
+### 🔹 Request (Query Parameters)
+
+| 파라미터        | 타입     | 필수 | 설명              |
+| ----------- | ------ | -- | --------------- |
+| `page`      | number | ❌  | 페이지 번호 (기본 1)   |
+| `size`      | number | ❌  | 페이지당 개수 (기본 10) |
+| `sidoName`  | string | ❌  | 시/도 필터          |
+| `gugunName` | string | ❌  | 구/군 필터          |
+| `dongName`  | string | ❌  | 동 필터            |
+| `minArea`   | number | ❌  | 최소 전용면적         |
+| `maxArea`   | number | ❌  | 최대 전용면적         |
+| `minPrice`  | number | ❌  | 최소 거래금액         |
+| `maxPrice`  | number | ❌  | 최대 거래금액         |
+
+> ⚠️ 모든 필터는 선택 사항이며, 전달하지 않으면 전체 조회
+
+---
+
+### 🔹 Response
 
 ```json
 {
   "success": true,
-  "data": [
-    {
-      "stickerId": 12,
-      "userId": 3,
-      "userNickname": "반포토박이",
-      "stickerTypeId": 1,
-      "stickerTypeName": "LIKE",
-      "description": "한강공원 접근성이 너무 좋고 커뮤니티 시설이 최고입니다.",
-      "createdAt": "2025-01-24T10:30:00"
-    },
-    {
-      "stickerId": 11,
-      "userId": 8,
-      "userNickname": "새집증후군",
-      "stickerTypeName": "NORMAL",
-      "description": "학교 때문에 이사왔는데 주변 상가 공실이 좀 있어요.",
-      "createdAt": "2025-01-24T08:10:00"
-    }
-  ]
+  "data": {
+    "items": [
+      {
+        "interestId": 12,
+        "dealNo": 34567,
+        "aptSeq": "30140-39",
+        "aptName": "디팰리스",
+        "jibun": "서울시 강남구 삼성동 123",
+        "roadNm": "테헤란로",
+        "buildYear": 2015,
+        "latitude": 37.12345,
+        "longitude": 127.12345,
+        "aptDong": "101",
+        "floor": "12",
+        "dealYear": 2024,
+        "dealMonth": 3,
+        "dealDay": 12,
+        "excluUseAr": 118.75,
+        "dealAmount": "28억",
+        "createdAt": "2025-01-02T14:22:11",
+        "hasSticker": false
+      }
+    ],
+    "totalCount": 1,
+    "page": 1,
+    "size": 10
+  }
 }
 ```
 
 ---
 
-## 😊 이모티콘 타입 정의
+## 3. 찜한 매물 등록
 
-| 타입      | 의미 | UI 이모티콘 |
-| ------- | -- | ------- |
-| LIKE    | 만족 | 😊      |
-| NORMAL  | 보통 | 😐      |
-| DISLIKE | 불만 | 😫      |
+### 🔹 API
 
----
-
-## 📊 반응 요약 계산 방식
-
-* 전체 스티커 개수를 기준으로 퍼센트 계산
-
-```text
-퍼센트 = (해당 타입 개수 / 전체 스티커 수) × 100
+```
+POST /api/interests/{dealNo}
 ```
 
-### UI 컬러 규칙
+### 🔹 Path Variable
 
-* LIKE → 연한 초록
-* NORMAL → 연한 회색
-* DISLIKE → 연한 빨강
+| 이름       | 타입     | 설명                    |
+| -------- | ------ | --------------------- |
+| `dealNo` | number | 거래 ID (housedeals.no) |
 
----
+### 🔹 Response
 
-## 💬 거주민 간단 리뷰
-
-### 표시 조건
-
-* `description` 값이 존재하는 스티커만 리뷰로 표시
-* 최신순 (`createdAt DESC`)
-
-### 표시 항목
-
-* 유저 닉네임 (`userNickname`)
-* 이모티콘 (타입 기반)
-* 리뷰 내용 (`description`)
-* 작성 시점
-
-  * n시간 전 / 어제 / YYYY.MM.DD
-
-### 리뷰 없음
-
-```text
-아직 등록된 거주민 후기가 없습니다.
+```json
+{
+  "success": true,
+  "message": "관심 매물 등록 성공"
+}
 ```
 
 ---
 
-## 🧩 프론트엔드 구성 (권장)
+## 4. 찜한 매물 삭제
 
-```text
-components/
- └─ sticker/
-     ├─ StickerSummary.vue      // 이모티콘 비율 요약
-     ├─ StickerReviewItem.vue   // 단일 리뷰
-     └─ StickerSection.vue      // 전체 섹션
+### 🔹 API
+
+```
+DELETE /api/interests/{dealNo}
+```
+
+### 🔹 Response
+
+```json
+{
+  "success": true,
+  "message": "관심 매물 삭제 성공"
+}
 ```
 
 ---
 
-## ⚙️ 기술 스택
+## 5. 프론트 구현 가이드 (중요)
 
-* Vue 3 (Composition API)
-* Vite
-* Tailwind CSS
-* axios 또는 fetch
+### 5.1 화면 표시용 주요 필드
 
----
-
-## 🚨 상태 처리
-
-| 상태     | 처리 방식                 |
-| ------ | --------------------- |
-| 로딩 중   | Skeleton UI 또는 로딩 문구  |
-| 에러     | "거주민 반응을 불러오지 못했습니다." |
-| 데이터 없음 | Empty State UI        |
+| UI 요소 | 필드                  |
+| ----- | ------------------- |
+| 매물명   | `aptName`           |
+| 위치    | `roadNm` / `jibun`  |
+| 가격    | `dealAmount`        |
+| 면적    | `excluUseAr`        |
+| 동/층   | `aptDong` / `floor` |
+| 찜 등록일 | `createdAt`         |
 
 ---
 
-## ✅ 정리
+### 5.2 비즈니스 로직 주의사항
 
-* 모든 데이터는 **서버 API 기반**
-* 하드코딩 금지
-* 매물 상세 페이지 하단 "실제 거주민 반응" 영역에 적용
-* 반응 요약 + 리뷰 리스트를 동시에 제공하여 **신뢰도 높은 매물 정보 제공**
+* 로그인하지 않으면 401 반환
+* 동일 매물 중복 찜 불가
+* 사용자가 스티커를 이미 등록한 매물은 목록에서 제외됨
+* 페이지네이션 필수 대응
+
+---
+
+## 6. 비어있는 상태 (Empty State)
+
+```text
+아직 찜한 매물이 없습니다.
+```
+
+* items 배열이 비어있을 경우 표시
+* 첨부된 이미지와 동일한 UX 유지
+
+---
+
+## 7. 향후 확장 예정 필드
+
+* `hasSticker = true` 인 경우
+
+  * “이미 의견을 남긴 매물” 배지 표시
+* 지도 페이지 연동 (lat / lng 사용)
+
+---
+
+## 8. 요약
+
+* 본 API는 마이페이지 전용 찜 목록 API
+* 필터 + 페이지네이션 + UI 확장 필드 제공
+* 프론트는 `items`, `totalCount`, `page`, `size` 기준으로 렌더링
+
+---
+
+문의 사항 발생 시 백엔드 담당에게 해당 명세 기준으로 문의 바랍니다.

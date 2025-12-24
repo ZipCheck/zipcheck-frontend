@@ -163,10 +163,10 @@ const toggleFavorite = async () => {
 
 	try {
 		if (isFavorite.value) {
-			await removeFavoriteProperty(dealNo);
-		} else {
-			await addFavoriteProperty(dealNo);
-		}
+			                await removeFavoriteProperty(props.dealInfo.dealNo);
+			                isFavorite.value = false;		} else {
+			                await addFavoriteProperty(props.dealInfo.dealNo);
+			                isFavorite.value = true;		}
 		isFavorite.value = !isFavorite.value;
 	} catch (error) {
 		console.error("Failed to toggle favorite status:", error);

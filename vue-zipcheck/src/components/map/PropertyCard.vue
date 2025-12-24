@@ -38,7 +38,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { addFavoriteProperty, removeFavoriteProperty } from '@/api/users.api.js';
+import { addFavoriteProperty } from '@/api/users.api.js';
 import { isAuthenticated } from '@/stores/auth.store.js';
 
 const props = defineProps({

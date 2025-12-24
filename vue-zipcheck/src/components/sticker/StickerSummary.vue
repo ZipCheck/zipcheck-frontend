@@ -1,45 +1,40 @@
 <template>
-  <div>
-    <div class="flex items-center gap-2 mb-2">
-      <div class="flex-1 flex gap-4 items-center">
-        <span class="text-lg">😊</span>
-        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">만족</span>
-      </div>
-      <span class="text-sm font-bold text-gray-800 dark:text-gray-200 w-12 text-right">{{ summary.likePercent }}%</span>
+    <div>
+        <div class="flex w-full h-3 rounded-full overflow-hidden mb-4">
+            <div class="h-full rounded-l-full" :style="{ width: `${summary.likePercent}%`, backgroundColor: '#38BDF8' }"></div>
+            <div class="h-full" :style="{ width: `${summary.normalPercent}%`, backgroundColor: '#D1D5DB' }"></div>
+            <div class="h-full rounded-r-full" :style="{ width: `${summary.dislikePercent}%`, backgroundColor: '#F97316' }"></div>
+        </div>
+        <div class="flex justify-between text-sm">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: '#38BDF8' }"></span>
+                <span class="font-bold text-text-sub-light dark:text-text-sub-dark">좋아요</span>
+                <span class="font-mono text-text-main-light dark:text-text-main-dark">{{ summary.likePercent }}%</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: '#D1D5DB' }"></span>
+                <span class="font-bold text-text-sub-light dark:text-text-sub-dark">보통</span>
+                <span class="font-mono text-text-main-light dark:text-text-main-dark">{{ summary.normalPercent }}%</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: '#F97316' }"></span>
+                <span class="font-bold text-text-sub-light dark:text-text-sub-dark">별로에요</span>
+                <span class="font-mono text-text-main-light dark:text-text-main-dark">{{ summary.dislikePercent }}%</span>
+            </div>
+        </div>
     </div>
-    <div class="flex items-center gap-2 mb-2">
-      <div class="flex-1 flex gap-4 items-center">
-        <span class="text-lg">😐</span>
-        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">보통</span>
-      </div>
-      <span class="text-sm font-bold text-gray-800 dark:text-gray-200 w-12 text-right">{{ summary.normalPercent }}%</span>
-    </div>
-    <div class="flex items-center gap-2 mb-3">
-      <div class="flex-1 flex gap-4 items-center">
-        <span class="text-lg">😫</span>
-        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">불만</span>
-      </div>
-      <span class="text-sm font-bold text-gray-800 dark:text-gray-200 w-12 text-right">{{ summary.dislikePercent }}%</span>
-    </div>
-
-    <div class="flex w-full h-3 rounded-full overflow-hidden">
-      <div class="h-full bg-green-200 dark:bg-green-700" :style="{ width: `${summary.likePercent}%` }"></div>
-      <div class="h-full bg-gray-200 dark:bg-gray-600" :style="{ width: `${summary.normalPercent}%` }"></div>
-      <div class="h-full bg-red-200 dark:bg-red-700" :style="{ width: `${summary.dislikePercent}%` }"></div>
-    </div>
-  </div>
 </template>
 
 <script setup>
 defineProps({
-  summary: {
-    type: Object,
-    required: true,
-    default: () => ({
-      likePercent: 0,
-      normalPercent: 0,
-      dislikePercent: 0,
-    }),
-  },
+    summary: {
+        type: Object,
+        required: true,
+        default: () => ({
+            likePercent: 0,
+            normalPercent: 0,
+            dislikePercent: 0,
+        }),
+    },
 });
 </script>

@@ -291,13 +291,22 @@ const handleProfileUpdate = async () => {
 
 	if (isNicknameChanged) {
 		tasks.push(
-			updateMyNickname(nickname.value).catch(err => ({
-				error: true,
-				type: 'nickname',
-				message:
-					err.response?.data?.message ||
-					'닉네임 변경 중 오류가 발생했습니다.',
-			})),
+			updateMyNickname(nickname.value).catch(err => {
+				if (err.response && err.response.status === 409) {
+					return {
+						error: true,
+						type: 'nickname',
+						message: '이미 사용 중인 닉네임입니다.',
+					};
+				}
+				return {
+					error: true,
+					type: 'nickname',
+					message:
+						err.response?.data?.message ||
+						'닉네임 변경 중 오류가 발생했습니다.',
+				};
+			}),
 		);
 	}
 

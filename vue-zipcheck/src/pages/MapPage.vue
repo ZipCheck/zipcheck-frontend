@@ -355,7 +355,12 @@ onMounted(() => {
 	}
 
 	// URL 쿼리 파라미터에 lat, lng가 있는지 확인
-	const { lat, lng } = route.query;
+	const { lat, lng, q } = route.query;
+	if (q) {
+		aptNameSearch.value = q;
+		searchMapProperties();
+	}
+
 	if (lat && lng) {
 		const latitude = parseFloat(lat);
 		const longitude = parseFloat(lng);
