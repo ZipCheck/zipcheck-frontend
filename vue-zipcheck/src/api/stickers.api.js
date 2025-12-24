@@ -13,3 +13,12 @@ import http from './http';
 export const getStickerMap = params => {
 	return http.get('/api/stickers/map', { params });
 };
+
+/**
+ * 특정 아파트의 스티커 목록을 조회합니다.
+ * @param {string | number} aptId 아파트 ID
+ * @returns {Promise<Array>}
+ */
+export const getStickersByAptId = aptId => {
+	return http.get(`/api/stickers`, { params: { aptId } });
+};

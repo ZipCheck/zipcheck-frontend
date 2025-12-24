@@ -6,6 +6,7 @@ import PropertyCard from '@/components/map/PropertyCard.vue';
 import AiReport from '@/components/listing-detail/AiReport.vue';
 import ToastMessage from '@/components/common/ToastMessage.vue';
 import DealHistoryChart from '@/components/listing-detail/DealHistoryChart.vue';
+import StickerSection from '@/components/sticker/StickerSection.vue';
 
 const route = useRoute();
 const deals = ref([]);
@@ -153,6 +154,11 @@ onMounted(() => {
             <div class="lg:col-span-4">
                 <AiReport :aptSeq="route.params.aptSeq" />
             </div>
+        </div>
+
+        <!-- 거주민 스티커 섹션 -->
+        <div class="lg:col-span-12 mt-8">
+            <StickerSection :aptId="route.params.aptSeq" />
         </div>
     </div>
 </main>
