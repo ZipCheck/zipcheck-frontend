@@ -58,9 +58,11 @@
           <textarea
             v-model="description"
             rows="4"
+            maxlength="20"
             class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none placeholder-gray-400"
             placeholder="매물에 대한 솔직한 생각이나 특징을 기록해보세요."
           ></textarea>
+          <p class="text-xs text-gray-500 text-right">{{ description.length }} / 20</p>
         </div>
       </div>
 
@@ -92,7 +94,7 @@ import { useRouter } from 'vue-router';
 const props = defineProps({
   isOpen: Boolean,
   apartmentName: String,
-  apartmentId: [String, Number]
+  apartmentId: [String, Number],
 });
 
 const emit = defineEmits(['close', 'save']);
