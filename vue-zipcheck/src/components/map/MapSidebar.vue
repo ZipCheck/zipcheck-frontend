@@ -195,36 +195,32 @@
 						<span class="font-bold text-gray-800 dark:text-gray-200">{{
 							cluster.regionName
 						}}</span>
-						<span
-							class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold"
-							>{{ cluster.dealCount }}개</span
-						>
-					</div>
-				</template>
-
-				<!-- 아파트 목록 (줌 인 시) -->
-				<template
-					v-else-if="properties.length > 0 && properties[0].aptSeq !== undefined"
-				>
-					<div
-						v-for="(apt, index) in properties"
-						:key="apt.aptSeq || index"
-						@click="openReviewModal(apt)"
-						class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-					>
-						<div class="flex justify-between items-center mb-1">
-							<span class="font-bold text-gray-800 dark:text-gray-200">{{
-								apt.aptName
-							}}</span>
-							<span
-								class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-0.5 rounded-full font-bold"
-							>
-								{{ apt.dealCount }}건
-							</span>
-						</div>
-					</div>
-				</template>
-
+						                        						<span
+						                        							class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold"
+						                        							>{{ cluster.dealCount }}개</span
+						                        						>
+						                        					</div>
+						                        				</template>					                <!-- 아파트 목록 (줌 인 시) -->
+					                <template
+					                    v-else-if="properties.length > 0 && properties[0].aptSeq !== undefined"
+					                >
+					                    <div
+					                        v-for="(apt, index) in properties"
+					                        :key="apt.aptSeq || index"
+					                        @click="openReviewModal(apt)"
+					                        class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+					                    >
+					                        <div class="flex justify-between items-center mb-1">
+					                            <span class="font-bold text-gray-800 dark:text-gray-200">{{
+					                                apt.aptName
+					                            }}</span>
+					                            <span
+					                                class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-0.5 rounded-full font-bold"
+					                            >
+					                                								{{ apt.dealCount }}건
+					                                							</span>
+					                                						</div>
+					                                					</div>				</template>
 				<!-- 개별 매물 목록 (하위 호환) -->
 				<template v-else>
 					<PropertyCard

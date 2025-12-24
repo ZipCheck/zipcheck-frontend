@@ -171,7 +171,7 @@ const drawApartments = (list) => {
         content.className = 'apartment-marker';
         content.innerHTML = `
             <div class="apt-name">${item.aptName}</div>
-            <div class="deal-count">${item.dealCount}건</div>
+            <div class="deal-count">${formatCount(item.dealCount)}건</div>
         `;
         
         content.onclick = () => {
@@ -199,7 +199,7 @@ const drawClusters = (list) => {
         
         const content = document.createElement('div');
         content.className = 'cluster-overlay';
-        content.innerText = item.dealCount; // 백엔드 필드명 dealCount 사용
+        content.innerText = formatCount(item.dealCount); // 백엔드 필드명 dealCount 사용
         
         content.onclick = () => {
              const level = map.value.getLevel() - 1;
@@ -216,6 +216,19 @@ const drawClusters = (list) => {
         
         overlays.push(overlay);
     });
+};
+
+// 숫자를 특정 값 이상일 경우 'XXX+'으로 포맷하는 함수
+const formatCount = (count) => {
+    if (count > 500) {
+        return '500+';
+    } else if (count > 300) {
+        return '300+';
+    } else if (count > 100) {
+        return '100+';
+    } else {
+        return count.toString();
+    }
 };
 
 const drawIndividualMarkers = (list) => {
